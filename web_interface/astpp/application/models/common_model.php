@@ -56,6 +56,10 @@ class Common_model extends CI_Model {
 		$config = array();
 		$result = $query->result_array();
 		foreach ($result as $row) {
+			//fix for transfer from our repositary
+			if($row['name'] == 'decimal_points') {
+				$config[$row['name']] = $row['value'];
+			}
 			if($row['name'] == 'decimal_points' || $row['name'] == 'starting_digit' || $row['name'] == 'card_length' || $row['name'] == 'pin_length'){
 				$row['name'] = str_replace("_","",$row['name']);
 			}

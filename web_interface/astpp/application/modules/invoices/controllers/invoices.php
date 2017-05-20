@@ -1514,22 +1514,27 @@ function invoice_screen(){
         $query="select item_type,credit from invoice_details where invoiceid = ".$invoicedata['id']." and item_type='INVPAY' Group By id order by item_type desc"; 
             // echo  $query; exit;
         $invoice_total_query=$this->db->query($query);
-         if($invoice_total_query->num_rows() > 0){
-        $total=$invoice_total_query->result_array();
-        foreach($total as $key => $value){
-        $debit=$value['credit'];
-        }
-         if($debit){
-       // echo 'debit'; exit;
-           $invoice_path=$this->config->item('invoices_path');
-           $download_path = $invoice_path.$accountdata["id"].'/'.$invoicedata['invoice_prefix'].$invoicedata['invoiceid']."_invoice.pdf";
-           unlink($download_path);
-           $res = $this->common->get_invoice_template($invoicedata,$accountdata,"TRUE");
-          }
+
+		$this->load->module("invoices/templates");
+
+        if($invoice_total_query->num_rows() > 0){
+	        $total=$invoice_total_query->result_array();
+    	    foreach($total as $key => $value){
+        		$debit=$value['credit'];
+        	}
+         	if($debit){
+       		// echo 'debit'; exit;
+           		$invoice_path=$this->config->item('invoices_path');
+           		$download_path = $invoice_path.$accountdata["id"].'/'.$invoicedata['invoice_prefix'].$invoicedata['invoiceid']."_invoice.pdf";
+           		unlink($download_path);
+//           	$res = $this->common->get_invoice_template($invoicedata,$accountdata,"TRUE");
+			 	$res = $this->templates->get_invoice_template($invoicedata,$accountdata,"TRUE");
+          	}
           }
          $invoice_path=$this->config->item('invoices_path');
          $download_path = $invoice_path.$accountdata["id"].'/'.$invoicedata['invoice_prefix'].$invoicedata['invoiceid']."_invoice.pdf";
-        $res = $this->common->get_invoice_template($invoicedata,$accountdata,"TRUE");
+//        $res = $this->common->get_invoice_template($invoicedata,$accountdata,"TRUE");
+		 $res = $this->templates->get_invoice_template($invoicedata,$accountdata,"TRUE");
     }
   function Sec2Minutes( $seconds )
   {

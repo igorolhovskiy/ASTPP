@@ -1901,6 +1901,52 @@ class common {
         );
         return $status_array;
 }
+
+	function get_user_group_calls_cdrs($user_id, $from, $to) {
+		$this->CI->db->select('cdrs.*');
+		$this->CI->db->select('routes.group_calls_id');
+		$this->CI->db->select('group_calls.name as group_calls_name');
+		$this->CI->db->select('SUM(cdrs.billseconds) as total_seconds');
+		$this->CI->db->select('SUM(cdrs.debit) as total_debit');
+
+		$this->CI->db->from('cdrs');
+
+		$this->CI->db->join('routes', 'routes.pattern = cdrs.pattern');
+		$this->CI->db->join('group_calls', 'group_calls.id = routes.group_calls_id');
+
+		$this->CI->db->where('cdrs.callstart >', $from);
+		$this->CI->db->where('cdrs.callstart <', $to);
+		$this->CI->db->where('cdrs.pricelist_id >', 0);
+		$this->CI->db->where('cdrs.billseconds >', 0);
+		$this->CI->db->where('cdrs.accountid', $user_id);
+		$this->CI->db->where('routes.group_calls_id >', 0);
+
+		$this->CI->db->group_by('routes.group_calls_id');
+
+		return $this->CI->db->get()->result_array();
+	}
+
+
+
+	function get_user_cdrs_without_group($user_id, $from, $to) {
+		$this->CI->db->select('SUM(billseconds) as total_seconds');
+		$this->CI->db->select('SUM(debit) as total_debit');
+
+		$this->CI->db->from('cdrs');
+
+		$this->CI->db->where('cdrs.callstart >', $from);
+		$this->CI->db->where('cdrs.callstart <', $to);
+		$this->CI->db->where('cdrs.pricelist_id >', 0);
+		$this->CI->db->where('cdrs.billseconds >', 0);
+
+		$this->CI->db->where('cdrs.accountid', $user_id);
+
+		$result = $this->CI->db->get()->first_row();
+
+		return $result;
+	}
+
+
 function get_invoice_template($invoicedata,$accountdata,$flag){
       $login_info = $this->CI->session->userdata('accountinfo');
 
@@ -2197,6 +2243,12 @@ exit;*/
 		$this->CI->html2pdf->Output($download_path,"F");         
 	   }
 }
+	function convert_sec_to_minsec($seconds) {
+		$minutes = (int) ($seconds / 60);
+		$secs = str_pad($seconds % 60, 2, '0', STR_PAD_LEFT);
+		return "{$minutes}:{$secs}";
+	}
+
 	function reseller_select_value($select, $table, $id_where = '') {
 		$select_params = explode(',', $select);
 		$where = array("1");
