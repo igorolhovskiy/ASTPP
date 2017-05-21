@@ -121,6 +121,9 @@ class Accounts_form {
 			array(gettext('LC Charge / Min'), 'INPUT', array('name' => 'charge_per_min', 'size' => '20', 'class' => "text field medium"), '', 'tOOL TIP', ''),           
 			array(gettext('Tax'), 'tax_id', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'taxes_description', 'taxes', 'build_dropdown', 'where_arr', array('status' => 0, "reseller_id" => $loginid), 'multi'),
 		);
+		$form[gettext('Packages Settings')] = array(
+			array(gettext('Packages'), 'packages_id', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'package_name', 'packages', 'build_dropdown', 'where_arr', '', 'multi'),
+		);
 	if($id==0){
 	  $form[gettext('Alert Threshold')] = array(
 			array('', 'HIDDEN', array('name' => 'id'), '', '', '', ''),

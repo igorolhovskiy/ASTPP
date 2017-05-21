@@ -195,6 +195,11 @@ class Accounts extends MX_Controller {
 				$taxes_data = $taxes_data->result_array();
 				$account_data["tax_id"] = explode(",", $taxes_data[0]['taxes_id']);
 			}
+			$packages_data = $this->db_model->getSelect("group_concat(packages_id) as packages_id", "packages_to_account", array("accountid" => $edit_id));
+			if (isset($packages_data) && $packages_data->num_rows() > 0) {
+				$packages_data = $packages_data->result_array();
+				$account_data["packages_id"] = explode(",", $packages_data[0]['packages_id']);
+			}
 			/*             * ***
               ASTPP  3.0 
               Password decode
@@ -244,6 +249,19 @@ class Accounts extends MX_Controller {
 					}
 					unset($add_array['tax_id']);
 				}
+
+				$query = $this->accounts_model->remove_all_account_packages($add_array['id']);
+				if (isset($add_array['packages_id'])) {
+					foreach ($add_array['packages_id'] as $key => $val) {
+						$data2 = array(
+							'accountid' => $add_array['id'],
+							'packages_id' => $val,
+						);
+						$this->accounts_model->add_account_packages($data2);
+					}
+					unset($add_array['packages_id']);
+				}
+
 				//Completed
 				unset($add_array['posttoexternal'],$add_array['number'],$add_array['balance']);
 				$this->accounts_model->edit_account($add_array, $add_array['id']);
@@ -277,6 +295,18 @@ class Accounts extends MX_Controller {
 					}
 					unset($add_array['tax_id']);
 				}
+
+				if (isset($add_array['packages_id'])) {
+					foreach ($add_array['packages_id'] as $key => $val) {
+						$data2 = array(
+							'accountid' => $last_id,
+							'packages_id' => $val,
+						);
+						$this->accounts_model->add_account_packages($data2);
+					}
+					unset($add_array['packages_id']);
+				}
+
 				$this->session->set_flashdata('astpp_errormsg', ucfirst($entity_name) . ' added successfully!');
 				redirect(base_url() . 'accounts/customer_list/');
 				exit;

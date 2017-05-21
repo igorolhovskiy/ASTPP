@@ -33,7 +33,7 @@ class Package_form {
 			array('', 'HIDDEN', array('name' => 'id'), '', '', '', ''),
 			array('', 'HIDDEN', array('name' => 'status', 'value' => '1'), '', '', ''),
 			array('Name', 'INPUT', array('name' => 'package_name', 'size' => '20',  'class' => "text field medium"), 'trim|required|xss_clean', 'tOOL TIP', ''),
-			array('Rate Group', 'pricelist_id', 'SELECT', '', 'dropdown', 'tOOL TIP', 'Please Enter account number', 'id', 'name', 'pricelists', 'build_dropdown', 'where_arr', array("status" => "0","reseller_id" => "0")),
+			// array('Rate Group', 'pricelist_id', 'SELECT', '', 'dropdown', 'tOOL TIP', 'Please Enter account number', 'id', 'name', 'pricelists', 'build_dropdown', 'where_arr', array("status" => "0","reseller_id" => "0")),
 			array('Included Seconds', 'INPUT', array('name' => 'includedseconds', 'size' => '20',  'class' => "text field medium"), 'trim|is_numeric|required|xss_clean', 'tOOL TIP', ''),
 /**
 ASTPP  3.0 

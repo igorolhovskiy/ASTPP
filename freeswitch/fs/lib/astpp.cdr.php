@@ -402,8 +402,8 @@ function package_calculation($destination_number,$pricelist_id,$duration,$call_d
 	$package_array = array();
 	$custom_destination = number_loop($destination_number,"patterns",$db);
 
-	$query = "SELECT * FROM packages  as P inner join package_patterns as PKGPTR on P.id = PKGPTR.package_id WHERE ".$custom_destination." AND status = 0 AND pricelist_id = ".$pricelist_id." ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
-
+	// $query = "SELECT * FROM packages  as P inner join package_patterns as PKGPTR on P.id = PKGPTR.package_id WHERE ".$custom_destination." AND status = 0 AND pricelist_id = ".$pricelist_id." ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
+	$query = "SELECT * FROM packages  as P inner join package_patterns as PKGPTR on P.id = PKGPTR.package_id WHERE ".$custom_destination." AND status = 0  ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
 	$package_info = $db->run($query);
 	if($package_info){
 		$package_info = $package_info[0];

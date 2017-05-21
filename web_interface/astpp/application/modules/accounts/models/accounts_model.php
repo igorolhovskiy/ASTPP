@@ -62,6 +62,7 @@ class Accounts_model extends CI_Model {
 		$invoice_config = "";		
 		}
 		unset($accountinfo['invoice_config_flag']);
+		unset($accountinfo['packages_id']);
 		$result = $this->db->insert('accounts', $accountinfo);
 		$last_id = $this->db->insert_id();
 				/**
@@ -652,6 +653,22 @@ class Accounts_model extends CI_Model {
 	 */
 	function add_account_tax($data) {
 		$this->db->insert('taxes_to_accounts', $data);
+	}
+
+	/**
+	 * -------Here we write code for model accounting functions remove_all_account_packages------
+	 * for remove all account's packages enteries from database.
+	 */
+	function remove_all_account_packages($account_id) {
+		$this->db->where('accountid', $account_id);
+		$this->db->delete('packages_to_account');
+		return true;
+	}
+
+
+	function add_account_packages($data)
+	{
+		$this->db->insert('packages_to_account', $data);
 	}
 
 	/**
