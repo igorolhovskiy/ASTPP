@@ -94,7 +94,8 @@ class Accounts_form {
 			array(gettext('Zip/Postal Code'), 'INPUT', array('name' => 'postal_code', 'size' => '15',  'class' => "text field medium"), 'trim|xss_clean', 'tOOL TIP', ''),
 			array(gettext('Country'), array('name' => 'country_id', 'class' => 'country_id'), 'SELECT', '', array("name" => "country_id", "rules" => "required"), 'tOOL TIP', 'Please Enter account number', 'id', 'country', 'countrycode', 'build_dropdown', '', ''),
 			array(gettext('Timezone'), array('name' => 'timezone_id', 'class' => 'timezone_id'), 'SELECT', '', array("name" => "timezone_id", "rules" => "required"), 'tOOL TIP', 'Please Enter account number', 'id', 'gmtzone', 'timezone', 'build_dropdown', '', ''),
-			array(gettext('Currency'), array('name' => 'currency_id', 'class' => 'currency_id'), 'SELECT', '', array("name" => "currency_id", "rules" => "required"), 'tOOL TIP', 'Please Enter account number', 'id', 'currencyname,currency', 'currency', 'build_concat_dropdown', '', array())
+			array(gettext('Currency'), array('name' => 'currency_id', 'class' => 'currency_id'), 'SELECT', '', array("name" => "currency_id", "rules" => "required"), 'tOOL TIP', 'Please Enter account number', 'id', 'currencyname,currency', 'currency', 'build_concat_dropdown', '', array()),
+			array(gettext('Invoice Template'), array('name' => 'invoice_template_id', 'class' => 'invoice_template_id'), 'SELECT', '', array("name" => "invoice_template_id", "rules" => "required"), 'tOOL TIP', 'Please Enter account number', 'id', 'name', 'invoice_templates', 'build_dropdown', '', array())
 		);
 
 		$form[gettext('Account Settings')] = array(
