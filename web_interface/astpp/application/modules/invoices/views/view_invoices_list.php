@@ -57,17 +57,23 @@ function invoice_delete(inv_id){
     });
     
      $(document).ready(function() {
-        var currentdate = new Date(); 
-        var datetime = currentdate.getFullYear() + "-"
-            + ('0' + (currentdate.getMonth()+1)).slice(-2) + "-" 
-                + currentdate.getDate() + " ";
-            
-        var datetime1 = currentdate.getFullYear() + "-"
-           +('0' + (currentdate.getMonth()+1)).slice(-2) + "-" 
+        var session_data = '<?php echo !empty($this->session->userdata['invoice_list_search']) ? json_encode($this->session->userdata['invoice_list_search']) : ''; ?>';
+        if (session_data) {
+          update_search_form_from_session_json(session_data);
+        } else {
+          var currentdate = new Date();
+          var datetime = currentdate.getFullYear() + "-"
+            + ('0' + (currentdate.getMonth()+1)).slice(-2) + "-"
+            + currentdate.getDate() + " ";
+
+          var datetime1 = currentdate.getFullYear() + "-"
+            +('0' + (currentdate.getMonth()+1)).slice(-2) + "-"
             + currentdate.getDate() + ""
 
-        $("#invoice_from_date").val(datetime);		
-        $("#invoice_to_date").val(datetime1);
+          $("#invoice_from_date").val(datetime);
+          $("#invoice_to_date").val(datetime1);
+        }
+
     });
 </script>
 <script type='text/javascript'>
@@ -136,7 +142,7 @@ $login_type = $this->session->userdata['userlevel_logintype'];
 	<div class="w-section inverse no-padding">
     	<div class="container">
    	    <div class="row">
-            	<div class="portlet-content"  id="search_bar" style="cursor:pointer; display:none">
+            	<div class="portlet-content"  id="search_bar" style="cursor:pointer; display:none;">
                     	<?php echo $form_search; ?>
     	        </div>
             </div>

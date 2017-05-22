@@ -1790,12 +1790,13 @@ $customer_address .= "</div>";
 			$this->session->set_userdata('advance_search', $this->input->post('advance_search'));
 			$action = $this->input->post();
 
-echo '<pre>';          
-print_r($action);
+			echo '<pre>';
+			print_r($action);
 			unset($action['action']);
 			unset($action['advance_search']);
+			$action['restore_search'] = 1;
 			$action['from_date'][0]=$action['from_date'][0] ? $action['from_date'][0]." 00:00:00" :'';
- 		$action['invoice_date'][0]=$action['invoice_date'][0] ? $action['invoice_date'][0]." 00:00:00" : '';
+ 			$action['invoice_date'][0]=$action['invoice_date'][0] ? $action['invoice_date'][0]." 00:00:00" : '';
 			$this->session->set_userdata('invoice_list_search', $action);
 		}
 		if (@$ajax_search != 1) {
