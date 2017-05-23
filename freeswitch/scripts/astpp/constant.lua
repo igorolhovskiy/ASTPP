@@ -39,5 +39,3 @@ TBL_PACKAGE="packages"
 TBL_PACKAGE_PATTERN="package_patterns"
 TBL_COUNTERS="counters"
 TBL_RESELLER_PRICING="reseller_pricing"
-
-

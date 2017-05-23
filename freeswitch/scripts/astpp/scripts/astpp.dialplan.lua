@@ -126,7 +126,7 @@ if(userinfo ~= nil) then
     end
 
     -- Get package information of customer
-    package_array = package_calculation (destination_number,userinfo,call_direction)
+    package_array = package_calculation(destination_number,userinfo,call_direction)
         
     userinfo = package_array[1]
     package_maxlength = package_array[2] or ""
@@ -138,7 +138,7 @@ if(userinfo ~= nil) then
     end
 
     if(userinfo['local_call'] == '1' and call_direction == "local") then
-        Logger.warning("[Functions] [DOAUTHORIZATION] ["..accountcode.."] LOCAL CALL IS DISABLE....!!");
+        Logger.warning("[Functions] [DOAUTHORIZATION] ["..accountcode.."] LOCAL CALL IS DISABLED.");
         call_direction = 'outbound'
     end
 end
