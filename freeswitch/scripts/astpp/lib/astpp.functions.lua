@@ -256,9 +256,9 @@ function get_call_maxlength(userinfo,destination_number,call_direction,number_lo
     local xml_rates
     local tmp = {}
     
-    if (package_maxlength ~= "") {
+    if (package_maxlength ~= "") then
         maxlength = tonumber(package_maxlength)
-    }
+    end
 
     rate_group = get_pricelists(userinfo,destination_number,number_loop,call_direction)
     if (rate_group == nil) then
