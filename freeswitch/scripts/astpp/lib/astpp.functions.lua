@@ -249,14 +249,18 @@ end
 
 
 -- Find Max length
-function get_call_maxlength(userinfo,destination_number,call_direction,number_loop,config,didinfo)     
+function get_call_maxlength(userinfo,destination_number,call_direction,number_loop,config,didinfo, package_maxlength)     
     local maxlength = 0
     local rates
     local rate_group
     local xml_rates
     local tmp = {}
     
-    rate_group = get_pricelists (userinfo,destination_number,number_loop,call_direction)
+    if (package_maxlength ~= "") {
+        maxlength = tonumber(package_maxlength)
+    }
+
+    rate_group = get_pricelists(userinfo,destination_number,number_loop,call_direction)
     if (rate_group == nil) then
         Logger.warning("[FIND_MAXLENGTH] Rate group not found or Inactive!!!")
         return 'ORIGNATION_RATE_NOT_FOUND'
@@ -275,9 +279,9 @@ function get_call_maxlength(userinfo,destination_number,call_direction,number_lo
         rates['connectcost'] = 0
         rates['id'] = 0
     else
-        rates = get_rates (userinfo,destination_number,number_loop,call_direction,config)
+        rates = get_rates(userinfo,destination_number,number_loop,call_direction,config)
         if (rates == nil) then
-            Logger.info("[FIND_MAXLENGTH] Rates not found!!!")
+            Logger.info("[FIND_MAXLENGTH] Rates not found!")
             return 'ORIGNATION_RATE_NOT_FOUND'
         end
         if( call_direction == "inbound" ) then
@@ -331,18 +335,18 @@ function get_call_maxlength(userinfo,destination_number,call_direction,number_lo
         end
 
         balance = get_balance(userinfo)
-        if (balance <= (rates['connectcost'] + rates['cost'])) then
-              Logger.info("[FIND_MAXLENGTH] Your balance is not sufficent to dial "..destination_number.." !!!")
-              return 'NO_SUFFICIENT_FUND'
+        if (balance <= (rates['connectcost'] + rates['cost']) and maxlength == 0) then
+            Logger.info("[FIND_MAXLENGTH] Your balance is not sufficent to dial "..destination_number..".")
+            return 'NO_SUFFICIENT_FUND'
         end
         if (tonumber(rates['cost']) > 0 ) then
-              maxlength = ( balance -  rates['connectcost'] ) / rates['cost']
+              maxlength = maxlength + ( balance -  rates['connectcost'] ) / rates['cost']
               if ( config['call_max_length'] and (tonumber(maxlength) > tonumber(config['call_max_length']) / 1000)) then
                 maxlength = config['call_max_length'] / 1000 / 60
-                  Logger.info("[FIND_MAXLENGTH] LIMITING CALL TO CONFIG MAX LENGTH "..maxlength.."!!!")
+                  Logger.info("[FIND_MAXLENGTH] Limiting call to config max length "..maxlength..".")
               end
         else
-              Logger.info("[FIND_MAXLENGTH] Call is free - assigning max length!!! :: " .. config['max_free_length'] )
+              Logger.info("[FIND_MAXLENGTH] Call is free - assigning max length :: " .. config['max_free_length'] )
               maxlength = config['max_free_length']
         end      
 
@@ -396,7 +400,8 @@ function package_calculation(destination_number,userinfo,call_direction)
 
     custom_destination = number_loop(destination_number,"patterns")
 
-    local query = "SELECT * FROM ".. TBL_PACKAGE.."  as P INNER JOIN "..TBL_PACKAGE_PATTERN.." as PKGPTR on P.id = PKGPTR.package_id WHERE ".. custom_destination.." AND status = 0 AND pricelist_id = ".. userinfo['pricelist_id'] .. " ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
+    -- Some magic on this query, but works. Idea - got packages entry for current call
+    local query = "SELECT * FROM ".. TBL_PACKAGE.." as P INNER JOIN "..TBL_PACKAGE_PATTERN.." as PKGPTR on P.id = PKGPTR.package_id INNER JOIN packages_to_account AS PKGTOAC ON P.id = PKGTOAC.packages_id WHERE ".. custom_destination.." AND status = 0 AND PKGTOAC.accountId = ".. userinfo['id'] .. " ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1"
     Logger.debug("[GET_PACKAGE_INFO] Query :" .. query)
     assert (dbh:query(query, function(u)
         package_info = u
@@ -418,7 +423,9 @@ function package_calculation(destination_number,userinfo,call_direction)
             remaining_sec = tonumber(package_info['includedseconds']) - tonumber(freeseconds)
             Logger.info("Remaining Sec : "..remaining_sec)
             if(remaining_sec > 0) then
+                    -- ?????? TODO
                     userinfo['balance'] = 100
+
                     userinfo['NO_SUFFICIENT_FUND'] = ''
                     remaining_sec = remaining_sec + 5
                     package_maxlength = remaining_sec / 60; 

@@ -174,8 +174,8 @@ if (userinfo ~= nil) then
 
     number_loop_str = number_loop(destination_number)
 
-    -- Fine max length of call based on origination rates.
-    origination_array = get_call_maxlength(userinfo,destination_number,call_direction,number_loop_str,config,didinfo)
+    -- Fine max length of call based on origination rates. TODO - Added 1 more parameter
+    origination_array = get_call_maxlength(userinfo,destination_number,call_direction,number_loop_str,config,didinfo,package_maxlength)
         
     if( origination_array == 'NO_SUFFICIENT_FUND' or origination_array == 'ORIGNATION_RATE_NOT_FOUND') then
         error_xml_without_cdr(destination_number,origination_array,calltype,config['playback_audio_notification'],userinfo['id']) 
@@ -187,9 +187,9 @@ if (userinfo ~= nil) then
     xml_user_rates = origination_array[3] or ""
 
     -- If customer has free seconds then override max length variable with it. 
-    if(package_maxlength ~= "") then    
-        maxlength=package_maxlength
-    end   
+    --if(package_maxlength ~= "") then    
+    --    maxlength=package_maxlength
+    --end   
     
     -- Reseller validation starts
     local reseller_ids = {}
@@ -211,7 +211,7 @@ if (userinfo ~= nil) then
         end
 
         -- Get package information of reseller
-        package_array = package_calculation (destination_number,reseller_userinfo,call_direction)
+        package_array = package_calculation(destination_number,reseller_userinfo,call_direction)
         
         reseller_userinfo = package_array[1]
         package_maxlength = package_array[2] or ""
@@ -239,7 +239,7 @@ if (userinfo ~= nil) then
             Logger.info("Type : "..reseller_userinfo['posttoexternal'].." [0:prepaid,1:postpaid]")  
             Logger.info("Ratecard id : "..reseller_userinfo['pricelist_id'])  
             
-            origination_array_reseller=get_call_maxlength(reseller_userinfo,destination_number,call_direction,number_loop_str,config,didinfo)
+            origination_array_reseller=get_call_maxlength(reseller_userinfo,destination_number,call_direction,number_loop_str,config,didinfo,package_maxlength)
 
             if( origination_array_reseller == 'NO_SUFFICIENT_FUND' or origination_array_reseller == 'ORIGNATION_RATE_NOT_FOUND') then
                 error_xml_without_cdr(destination_number,origination_array_reseller,calltype,1,reseller_userinfo['id']) 
@@ -260,9 +260,9 @@ if (userinfo ~= nil) then
             --end
 
             -- If reseller has free seconds then override max length variable with it. 
-            if(package_maxlength ~= "") then    
-                xml_reseller_rates=package_maxlength
-            end  
+            --if(package_maxlength ~= "") then    
+            --    xml_reseller_rates=package_maxlength
+            --end  
 
             if (tonumber(reseller_maxlength) < tonumber(maxlength)) then 
                 maxlength = reseller_maxlength
@@ -301,7 +301,7 @@ if (userinfo ~= nil) then
 
         dialuserinfo = doauthorization(didinfo['accountid'],call_direction,destination_number,number_loop)  
         -- ********* Check & get Dialer Rate card information *********
-            origination_array_DID = get_call_maxlength(customer_userinfo,destination_number,"outbound",number_loop_str,config)
+            origination_array_DID = get_call_maxlength(customer_userinfo,destination_number,"outbound",number_loop_str,config,"")
             local actual_userinfo = customer_userinfo
              Logger.info("[userinfo] Actual CustomerInfo XML:" .. actual_userinfo['id'])
             --customer_userinfo['id'] = didinfo['accountid'];
@@ -316,7 +316,7 @@ if (userinfo ~= nil) then
         while (tonumber(customer_userinfo['reseller_id']) > 0  ) do 
             Logger.info("[WHILE DID CONDITION] FOR CHECKING RESELLER :" .. customer_userinfo['reseller_id']) 
             customer_userinfo = doauthorization(customer_userinfo['reseller_id'],call_direction,destination_number,number_loop) 
-            origination_array_DID = get_call_maxlength(customer_userinfo,destination_number,"outbound",number_loop_str,config)
+            origination_array_DID = get_call_maxlength(customer_userinfo,destination_number,"outbound",number_loop_str,config,"")
 
             if(origination_array_DID ~= 'ORIGNATION_RATE_NOT_FOUND' and origination_array_DID ~= 'NO_SUFFICIENT_FUND') then 
                 Logger.info("[userinfo] Userinfo XML:" .. customer_userinfo['id']) 
@@ -327,8 +327,8 @@ if (userinfo ~= nil) then
             end
         end
         -- ********* END *********
-         Logger.info("[userinfo] Actual CustomerInfo XML : " .. actual_userinfo['id'])
-xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,actual_userinfo,config,xml_did_rates)
+        Logger.info("[userinfo] Actual CustomerInfo XML : " .. actual_userinfo['id'])
+        xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,actual_userinfo,config,xml_did_rates)
         xml = freeswitch_xml_inbound(xml,didinfo,actual_userinfo,config,xml_did_rates)
         xml = freeswitch_xml_footer(xml)            
         XML_STRING = table.concat(xml, "\n");
@@ -348,104 +348,104 @@ xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_di
         -- Get termination rates 
         termination_rates = get_carrier_rates (destination_number,number_loop_str,userinfo['pricelist_id'],rate_carrier_id,user_rates['routing_type'])
     
-    if (termination_rates ~= nil) then
-        local i = 1
-        local carrier_array = {}
-        for termination_key,termination_value in pairs(termination_rates) do
-        if ( tonumber(termination_value['cost']) > tonumber(user_rates['cost']) ) then          
-                Logger.notice(termination_value['path']..": "..termination_value['cost'] .." > "..user_rates['cost']..", skipping")  
-        else
-            Logger.info("=============== Termination Rates Information ===================")
-            Logger.info("ID : "..termination_value['outbound_route_id'])  
-            Logger.info("Code : "..termination_value['pattern'])  
-            Logger.info("Destination : "..termination_value['comment'])  
-            Logger.info("Connectcost : "..termination_value['connectcost'])  
-            Logger.info("Free Seconds : "..termination_value['includedseconds'])  
-            Logger.info("Prefix : "..termination_value['pattern'])                  
-            Logger.info("Strip : "..termination_value['strip'])               
-            Logger.info("Prepend : "..termination_value['prepend'])               
-            Logger.info("Carrier id : "..termination_value['trunk_id'])                         
-            Logger.info("carrier_name : "..termination_value['path'])
-            Logger.info("dialplan_variable : "..termination_value['dialplan_variable']) 
-            Logger.info("Failover gateway : "..termination_value['path1'])                  
-            Logger.info("Vendor id : "..termination_value['provider_id'])                           
-            Logger.info("Number Translation : "..termination_value['dialed_modify'])                                        
-            Logger.info("Max channels : "..termination_value['maxchannels'])        
-            Logger.info("========================END OF TERMINATION RATES=======================")
-            carrier_array[i] = termination_value
-            i = i+1
-        end
-        end -- For EACH END HERE
-        
-        -- If we get any valid carrier rates then build dialplan for outbound call
-        if (i > 1) then
+        if (termination_rates ~= nil) then
+            local i = 1
+            local carrier_array = {}
+            for termination_key,termination_value in pairs(termination_rates) do
+                if ( tonumber(termination_value['cost']) > tonumber(user_rates['cost']) ) then          
+                        Logger.notice(termination_value['path']..": "..termination_value['cost'] .." > "..user_rates['cost']..", skipping")  
+                else
+                    Logger.info("=============== Termination Rates Information ===================")
+                    Logger.info("ID : "..termination_value['outbound_route_id'])  
+                    Logger.info("Code : "..termination_value['pattern'])  
+                    Logger.info("Destination : "..termination_value['comment'])  
+                    Logger.info("Connectcost : "..termination_value['connectcost'])  
+                    Logger.info("Free Seconds : "..termination_value['includedseconds'])  
+                    Logger.info("Prefix : "..termination_value['pattern'])                  
+                    Logger.info("Strip : "..termination_value['strip'])               
+                    Logger.info("Prepend : "..termination_value['prepend'])               
+                    Logger.info("Carrier id : "..termination_value['trunk_id'])                         
+                    Logger.info("carrier_name : "..termination_value['path'])
+                    Logger.info("dialplan_variable : "..termination_value['dialplan_variable']) 
+                    Logger.info("Failover gateway : "..termination_value['path1'])                  
+                    Logger.info("Vendor id : "..termination_value['provider_id'])                           
+                    Logger.info("Number Translation : "..termination_value['dialed_modify'])                                        
+                    Logger.info("Max channels : "..termination_value['maxchannels'])        
+                    Logger.info("========================END OF TERMINATION RATES=======================")
+                    carrier_array[i] = termination_value
+                    i = i+1
+                end
+            end -- For EACH END HERE
+            
+            -- If we get any valid carrier rates then build dialplan for outbound call
+            if (i > 1) then
 
-            xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config)
+                xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config)
 
-            calleridinfo = get_override_callerid(customer_userinfo)
-            calleridinfo = normalize_callerid_ani(calleridinfo)
+                calleridinfo = get_override_callerid(customer_userinfo)
+                calleridinfo = normalize_callerid_ani(calleridinfo)
 
-            callerid_consertis = get_callerid_consertis()
+                callerid_consertis = get_callerid_consertis()
 
-             if (call_context == 'redirected') then
-                local outbound_caller_id = params:getHeader("variable_sip_from_user")
-                callerid_astpp_headers = {}
-                callerid_astpp_headers['outbound'] = outbound_caller_id
-                callerid_astpp_headers['billing'] = "+"..params:getHeader("variable_effective_destination_number")
-                freeswitch_xml_callerid_redirected(xml, callerid_astpp_headers)
-                calleridinfo = {}
-                calleridinfo['cid_name'] = outbound_caller_id
-                calleridinfo['cid_number'] = outbound_caller_id
-            end
+                 if (call_context == 'redirected') then
+                    local outbound_caller_id = params:getHeader("variable_sip_from_user")
+                    callerid_astpp_headers = {}
+                    callerid_astpp_headers['outbound'] = outbound_caller_id
+                    callerid_astpp_headers['billing'] = "+"..params:getHeader("variable_effective_destination_number")
+                    freeswitch_xml_callerid_redirected(xml, callerid_astpp_headers)
+                    calleridinfo = {}
+                    calleridinfo['cid_name'] = outbound_caller_id
+                    calleridinfo['cid_number'] = outbound_caller_id
+                end
 
-            if (calleridinfo ~= nil) then
-                xml = freeswitch_xml_callerid(xml,calleridinfo)               
+                if (calleridinfo ~= nil) then
+                    xml = freeswitch_xml_callerid(xml,calleridinfo)               
+                else
+                    if (callerid_consertis ~= nil) then
+                        callerid_outbound, callerid_billing = get_callerid_consertis()
+                        calleridinfo = {}
+                        calleridinfo['cid_name'] = callerid_outbound
+                        calleridinfo['cid_number'] = callerid_outbound
+                        xml = freeswitch_xml_callerid(xml,calleridinfo)
+                        -- xml = freeswitch_xml_callerid_colt_consertis(xml, calleridinfo) 
+                        -- removed to better times
+                    end 
+                              
+                    if(config['opensips'] == '0') then
+                        calleridinfo = {}
+                        if (params:getHeader('variable_sip_h_P-effective_caller_id_name') ~= nil) then 
+                            calleridinfo['cid_name'] = params:getHeader('variable_sip_h_P-effective_caller_id_name')
+                        else
+                            calleridinfo['cid_name'] = ''
+                        end
+
+                        if (params:getHeader('variable_sip_h_P-effective_caller_id_number') ~= nil) then 
+                            calleridinfo['cid_number'] = params:getHeader('variable_sip_h_P-effective_caller_id_number')
+                        else
+                            calleridinfo['cid_number'] = ''
+                        end
+                        xml = freeswitch_xml_callerid(xml,calleridinfo)  
+                    end           
+                end
+
+                for carrier_arr_key,carrier_arr_array in pairs(carrier_array) do
+                    xml = freeswitch_xml_outbound(xml,destination_number,carrier_arr_array)
+                end
+
+                xml = freeswitch_xml_footer(xml)
             else
-                if (callerid_consertis ~= nil) then
-                    callerid_outbound, callerid_billing = get_callerid_consertis()
-                    calleridinfo = {}
-                    calleridinfo['cid_name'] = callerid_outbound
-                    calleridinfo['cid_number'] = callerid_outbound
-                    xml = freeswitch_xml_callerid(xml,calleridinfo)
-                    -- xml = freeswitch_xml_callerid_colt_consertis(xml, calleridinfo) 
-                    -- removed to better times
-                end 
-                          
-                if(config['opensips'] == '0') then
-                    calleridinfo = {}
-                    if (params:getHeader('variable_sip_h_P-effective_caller_id_name') ~= nil) then 
-                        calleridinfo['cid_name'] = params:getHeader('variable_sip_h_P-effective_caller_id_name')
-                    else
-                        calleridinfo['cid_name'] = ''
-                    end
-
-                    if (params:getHeader('variable_sip_h_P-effective_caller_id_number') ~= nil) then 
-                        calleridinfo['cid_number'] = params:getHeader('variable_sip_h_P-effective_caller_id_number')
-                    else
-                        calleridinfo['cid_number'] = ''
-                    end
-                    xml = freeswitch_xml_callerid(xml,calleridinfo)  
-                end           
-            end
-
-            for carrier_arr_key,carrier_arr_array in pairs(carrier_array) do
-                xml = freeswitch_xml_outbound(xml,destination_number,carrier_arr_array)
-            end
-
-            xml = freeswitch_xml_footer(xml)
+                -- If no route found for outbound call then send no result dialplan for further process in fs
+                Logger.notice("[Dialplan] No termination rates found...!!!");
+                error_xml_without_cdr(destination_number,"TERMINATION_RATE_NOT_FOUND",calltype,config['playback_audio_notification'],customer_userinfo['id']) 
+                return
+            end  --- IF ELSE END HERE
+            XML_STRING = table.concat(xml, "\n");
+            Logger.debug("[Dialplan] Generated XML:\n" .. XML_STRING)  
         else
-            -- If no route found for outbound call then send no result dialplan for further process in fs
             Logger.notice("[Dialplan] No termination rates found...!!!");
-            error_xml_without_cdr(destination_number,"TERMINATION_RATE_NOT_FOUND",calltype,config['playback_audio_notification'],customer_userinfo['id']) 
+            error_xml_without_cdr(destination_number,"TERMINATION_RATE_NOT_FOUND",calltype,config['playback_audio_notification'],customer_userinfo['id']);
             return
-        end  --- IF ELSE END HERE
-        XML_STRING = table.concat(xml, "\n");
-        Logger.debug("[Dialplan] Generated XML:\n" .. XML_STRING)  
-    else
-        Logger.notice("[Dialplan] No termination rates found...!!!");
-        error_xml_without_cdr(destination_number,"TERMINATION_RATE_NOT_FOUND",calltype,config['playback_audio_notification'],customer_userinfo['id']);
-        return
-    end
+        end
     end
 else
         error_xml_without_cdr(destination_number,"ACCOUNT_INACTIVE_DELETED",calltype,config['playback_audio_notification'],customer_userinfo['id']);
