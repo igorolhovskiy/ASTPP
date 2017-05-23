@@ -437,3 +437,29 @@ function generate_cc_dialplan(destination_number)
 	XML_STRING = table.concat(xml, "\n");
 	Logger.debug("Generated XML:\n" .. XML_STRING)
 end
+
+
+-- Set Colt-related headers for Consertis
+function freeswitch_xml_callerid_colt_consertis(xml, calleridinfo)
+    if (calleridinfo['cid_number'] ~= '' and calleridinfo['cid_billing'] ~= '') then
+        local p_asserted_header = '<sip:'..calleridinfo['cid_billing']..'@212.232.26.244\\;user=phone>\\;privacy=user\\;id\\;screen=no\\;reason=unconditional\\;counter=1'
+        table.insert(xml, [[<action application="set" data="sip_h_P-Asserted-Identity=]]..p_asserted_header..[["/>]]);
+        Logger.debug('[Dialplan] [COLT_CONSERTIS] Headers set to '..p_asserted_header)
+        if (calleridinfo['cid_number'] == 'restricted') then
+            table.insert(xml, [[<action application="set" data="sip_h_Privacy=id\;user"/>]])
+        end
+    else
+        Logger.debug('[Dialplan] [COLT_CONSERTIS] Headers not set')
+    end
+    return xml
+end
+
+-- Set callerid in a case of redirected call
+function freeswitch_xml_callerid_redirected(xml, calleridinfo)
+    if (calleridinfo['outbound'] ~= nil) then
+        table.insert(xml, [[<action application="set" data="sip_h_X-ASTPP-Outbound=]]..calleridinfo['outbound']..[["/>]])
+    end
+    if (calleridinfo['billing'] ~= nil) then
+        table.insert(xml, [[<action application="set" data="sip_h_X-ASTPP-Billing=]]..calleridinfo['billing']..[["/>]])
+    end
+end
