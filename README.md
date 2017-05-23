@@ -18,6 +18,3 @@ https://groups.google.com/forum/#!forum/astpp
 
 Bug Tracker : 
 github.com/iNextrix/ASTPP/issues
-
-
-
