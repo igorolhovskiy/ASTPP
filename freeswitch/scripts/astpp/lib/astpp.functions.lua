@@ -424,7 +424,7 @@ function package_calculation(destination_number,userinfo,call_direction)
             Logger.info("Remaining Sec : "..remaining_sec)
             if(remaining_sec > 0) then
                     -- ?????? TODO
-                    userinfo['balance'] = 100
+                    -- userinfo['balance'] = 100
 
                     userinfo['NO_SUFFICIENT_FUND'] = ''
                     remaining_sec = remaining_sec + 5
