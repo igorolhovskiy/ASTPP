@@ -392,6 +392,7 @@ function get_pricelists (userinfo,destination_number,number_loop,call_direction)
 end
 
 -- get intial package information
+<<<<<<< HEAD
 function package_calculation(destination_number,userinfo,call_direction)
     
     local tmp = {}
@@ -427,6 +428,38 @@ function package_calculation(destination_number,userinfo,call_direction)
                     -- userinfo['balance'] = 100
 
                     userinfo['NO_SUFFICIENT_FUND'] = ''
+=======
+function package_calculation (destination_number,userinfo,call_direction)
+		local tmp = {}
+		local remaining_sec
+		local package_maxlength
+	custom_destination = number_loop(destination_number,"patterns")
+
+	local query = "SELECT * FROM ".. TBL_PACKAGE.."  as P INNER JOIN "..TBL_PACKAGE_PATTERN.." AS PKGPTR ON P.id = PKGPTR.package_id WHERE ".. custom_destination.." AND status = 0 AND pricelist_id = ".. userinfo['pricelist_id'] .. " ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
+	Logger.debug("[GET_PACKAGE_INFO] Query :" .. query)
+	assert (dbh:query(query, function(u)
+		package_info = u
+		end))  
+	if(package_info ~= nil) then
+		--local counter_info = {}
+		local freeseconds
+		Logger.info("Pack Type : "..package_info['applicable_for'] .. " Call Direction : "..call_direction .." [0:outbound,1:inbound,2:both]");
+		if( (package_info['applicable_for'] == "0" and call_direction == "outbound") or (package_info['applicable_for'] == "1" and call_direction == "inbound") or (package_info['applicable_for'] == "2") ) then
+	
+		local counter_info =  get_counters(userinfo,package_info)
+
+			if(counter_info == nil or counter_info['seconds'] == nil) then
+				freeseconds = 0
+			else			
+				freeseconds = counter_info['seconds']
+			end
+			
+			remaining_sec = tonumber(package_info['includedseconds']) - tonumber(freeseconds)
+			Logger.info("Remaining Sec : "..remaining_sec)
+			if(remaining_sec > 0) then
+					userinfo['balance'] = 100
+			        userinfo['NO_SUFFICIENT_FUND'] = ''
+>>>>>>> packages_to_cdr
                     remaining_sec = remaining_sec + 5
                     package_maxlength = remaining_sec / 60; 
             end
