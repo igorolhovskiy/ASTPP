@@ -394,7 +394,7 @@ function package_calculation (destination_number,userinfo,call_direction)
 		local package_maxlength
 	custom_destination = number_loop(destination_number,"patterns")
 
-	local query = "SELECT * FROM ".. TBL_PACKAGE.."  as P inner join "..TBL_PACKAGE_PATTERN.." as PKGPTR on P.id = PKGPTR.package_id WHERE ".. custom_destination.." AND status = 0 AND pricelist_id = ".. userinfo['pricelist_id'] .. " ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
+	local query = "SELECT * FROM ".. TBL_PACKAGE.."  as P INNER JOIN "..TBL_PACKAGE_PATTERN.." AS PKGPTR ON P.id = PKGPTR.package_id WHERE ".. custom_destination.." AND status = 0 AND pricelist_id = ".. userinfo['pricelist_id'] .. " ORDER BY LENGTH(PKGPTR.patterns) DESC LIMIT 1";
 	Logger.debug("[GET_PACKAGE_INFO] Query :" .. query)
 	assert (dbh:query(query, function(u)
 		package_info = u
