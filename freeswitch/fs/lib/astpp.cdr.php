@@ -380,53 +380,31 @@ function normalize_origination_rate($dataVariable)
 }
 
 // Calculate cost for billing 
-function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_customer = False)
+function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_adopt_freeseconds = False)
 {
     //$logger->log(print_r($rates,true));
 
-    $duration = $dataVariable['billsec'];
-
-    $is_corrected_duration = False;
-    if (isset($dataVariable['corrected_duration']) && $is_customer) {
-        $duration = $dataVariable['corrected_duration'];
-        $is_corrected_duration = True;
-    }
+    $duration = get_corrected_duration($dataVariable['billsec'], $rates);
 
     // Modify to work with edge positions
     $freeseconds = isset($dataVariable['freeseconds'])?$dataVariable['freeseconds']:0;
 
     // Custom variable to use initial block or no. Idea is of we have freeseconds > 0, than we already count this initial seconds in freeseconds as well as includedseconds
-
-    if ($is_customer) {
+    if ($is_adopt_freeseconds) {
         $duration -= $freeseconds;
     }
 
     // End edge position modification
     $call_cost = 0;
 
-    if (!$is_corrected_duration) {
-        $duration -= $rates['INCLUDEDSECONDS'];
-    }
-
     if ($duration > 0 && ($dataVariable['hangup_cause'] == 'NORMAL_CLEARING' || $dataVariable['hangup_cause'] == 'ALLOTTED_TIMEOUT')) {
 
         $rates['INC'] = ($rates['INC'] == 0) ? 1 : $rates['INC'];
         $call_cost += isset($rates['CONNECTIONCOST'])?$rates['CONNECTIONCOST']:0;
 
-        if (!$is_corrected_duration) {
-            $call_cost += ($rates['INITIALBLOCK'] * $rates['COST']) / 60;
-            $billseconds = $duration - $rates['INITIALBLOCK'];
-        } else {
-            $billseconds = $duration;
-        }
-
-        if ($billseconds > 0)
+        if ($duration > 0)
         {
-            if ($is_corrected_duration) {
-                $call_cost += $billseconds*($rates['COST']/60);
-            } else {
-                $call_cost += (ceil($billseconds/$rates['INC'])*$rates['INC'])*($rates['COST']/60);
-            }
+            $call_cost += $duration*($rates['COST']/60);
         }
     }
     $call_cost = number_format($call_cost,$decimal_points);
