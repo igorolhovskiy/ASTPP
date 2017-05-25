@@ -121,7 +121,7 @@ function process_cdr($data, $db, $logger, $decimal_points)
     }
     
     //Calculate debit of customer call          
-    $debit = calc_cost($dataVariable,$origination_rate[$accountid],$logger,$decimal_points, True); // Last True - to adopt freeseconds if they are exist. For now - only for customer
+    $debit = calc_cost($dataVariable,$origination_rate[$accountid],$logger,$decimal_points, True); // Last True - is customer.
 
     //Calculate cost for customer call for provider
     $provider_cost = calc_cost($dataVariable,$termination_rate,$logger,$decimal_points);
@@ -380,14 +380,14 @@ function normalize_origination_rate($dataVariable)
 }
 
 // Calculate cost for billing 
-function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_use_freeseconds = False)
+function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_customer = False)
 {
     //$logger->log(print_r($rates,true));
 
     $duration = $dataVariable['billsec'];
 
     $is_corrected_duration = False;
-    if (isset($dataVariable['corrected_duration'])) {
+    if (isset($dataVariable['corrected_duration']) && $is_customer) {
         $duration = $dataVariable['corrected_duration'];
         $is_corrected_duration = True;
     }
@@ -397,7 +397,7 @@ function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_use_free
 
     // Custom variable to use initial block or no. Idea is of we have freeseconds > 0, than we already count this initial seconds in freeseconds as well as includedseconds
 
-    if ($is_use_freeseconds) {
+    if ($is_customer) {
         $duration -= $freeseconds;
     }
 
