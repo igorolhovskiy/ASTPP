@@ -103,7 +103,7 @@ function process_cdr($data, $db, $logger, $decimal_points)
     //Check if cusotmer have any package seconds left to use
     if ($actual_duration > 0) {
             $package_array = package_calculation($dataVariable['effective_destination_number'],$origination_rate[$accountid],$actual_duration,$dataVariable['call_direction'],$accountid,$db,$logger);
-            if(!empty($package_array))
+            if(isset($package_array['package_id']))
             {
                 $freeseconds = $package_array['freeseconds'];
 
@@ -116,6 +116,7 @@ function process_cdr($data, $db, $logger, $decimal_points)
                 $dataVariable['package_id']= $package_array['package_id'];
                 $dataVariable['freeseconds'] = $freeseconds;
             }
+            $dataVariable['corrected_duration'] = $package_array['corrected_duration'];
     }
     
     //Calculate debit of customer call          
@@ -383,39 +384,48 @@ function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_use_free
     //$logger->log(print_r($rates,true));
 
     $duration = $dataVariable['billsec'];
+
+    $is_corrected_duration = False;
+    if (isset($dataVariable['corrected_duration'])) {
+        $duration = $dataVariable['corrected_duration'];
+        $is_corrected_duration = True;
+    }
+
     // Modify to work with edge positions
     $freeseconds = isset($dataVariable['freeseconds'])?$dataVariable['freeseconds']:0;
 
     // Custom variable to use initial block or no. Idea is of we have freeseconds > 0, than we already count this initial seconds in freeseconds as well as includedseconds
-    $is_use_initial_block = True;
 
     if ($is_use_freeseconds) {
         $duration -= $freeseconds;
-        if ($freeseconds > 0) {
-            $is_use_initial_block = False;
-        }
     }
 
     // End edge position modification
     $call_cost = 0;
 
-    if ($is_use_initial_block) {
+    if (!$is_corrected_duration) {
         $duration -= $rates['INCLUDEDSECONDS'];
     }
-    
+
     if ($duration > 0 && ($dataVariable['hangup_cause'] == 'NORMAL_CLEARING' || $dataVariable['hangup_cause'] == 'ALLOTTED_TIMEOUT')) {
 
         $rates['INC'] = ($rates['INC'] == 0) ? 1 : $rates['INC'];
-        $call_cost = $rates['CONNECTIONCOST'];
+        $call_cost += isset($rates['CONNECTIONCOST'])?$rates['CONNECTIONCOST']:0;
 
-        if ($is_use_initial_block) {
+        if (!$is_corrected_duration) {
             $call_cost += ($rates['INITIALBLOCK'] * $rates['COST']) / 60;
             $billseconds = $duration - $rates['INITIALBLOCK'];
+        } else {
+            $billseconds = $duration;
         }
 
         if ($billseconds > 0)
         {
-            $call_cost += (ceil($billseconds/$rates['INC'])*$rates['INC'])*($rates['COST']/60);
+            if ($is_corrected_duration) {
+                $call_cost += $billseconds*($rates['COST']/60);
+            } else {
+                $call_cost += (ceil($billseconds/$rates['INC'])*$rates['INC'])*($rates['COST']/60);
+            }
         }
     }
     $call_cost = number_format($call_cost,$decimal_points);
@@ -426,20 +436,7 @@ function calc_cost($dataVariable, $rates, $logger, $decimal_points, $is_use_free
 // get intial package information
 function package_calculation($destination_number,$rate_info,$duration,$call_direction,$accountid,$db,$logger)
 {
-    $included_seconds = isset($rate_info['INCLUDEDSECONDS'])?$rate_info['INCLUDEDSECONDS']:0;
-    $corrected_duration = ($duration > $included_seconds)?($duration - $included_seconds):0;
-
-    if ($corrected_duration > 0) {
-        $initial_block = isset($rate_info['INITIALBLOCK'])?$rate_info['INITIALBLOCK']:0;
-        $increment = isset($rate_info['INC'])?$rate_info['INC']:1;
-
-        if ($corrected_duration > $initial_block) {
-            // Get correct duration with initial block and increment values
-            $corrected_duration = $initial_block + ceil(($corrected_duration - $initial_block) / $increment) * $increment;
-        } else {
-            $corrected_duration = $initial_block;
-        }
-    }
+    $corrected_duration = get_corrected_duration($duration, $rate_info);
 
     $package_array = array();
     $custom_destination = number_loop($destination_number,"patterns",$db);
@@ -479,6 +476,8 @@ function package_calculation($destination_number,$rate_info,$duration,$call_dire
             }                       
         } 
     }
+    $package_array['corrected_duration'] = $corrected_duration;
+
     return $package_array;
 } 
 
@@ -535,6 +534,25 @@ function number_loop($destination,$field,$db)
 function convert_to_gmt($date)
 {
     return gmdate('Y-m-d H:i:s', strtotime($date) );
+}
+
+function get_corrected_duration($duration, $rate_info) {
+
+    $included_seconds = isset($rate_info['INCLUDEDSECONDS'])?$rate_info['INCLUDEDSECONDS']:0;
+    $corrected_duration = ($duration > $included_seconds)?($duration - $included_seconds):0;
+
+    if ($corrected_duration > 0) {
+        $initial_block = isset($rate_info['INITIALBLOCK'])?$rate_info['INITIALBLOCK']:0;
+        $increment = isset($rate_info['INC'])?$rate_info['INC']:1;
+
+        if ($corrected_duration > $initial_block) {
+            // Get correct duration with initial block and increment values
+            $corrected_duration = $initial_block + ceil(($corrected_duration - $initial_block) / $increment) * $increment;
+        } else {
+            $corrected_duration = $initial_block;
+        }
+    }
+    return $corrected_duration;
 }
 
 ?>
