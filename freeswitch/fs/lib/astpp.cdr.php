@@ -103,11 +103,12 @@ function process_cdr($data, $db, $logger, $decimal_points)
     //Check if cusotmer have any package seconds left to use
     if ($actual_duration > 0) {
             $package_array = package_calculation($dataVariable['effective_destination_number'],$origination_rate[$accountid],$actual_duration,$dataVariable['call_direction'],$accountid,$db,$logger);
+            $corrected_duration = isset($package_array['corrected_duration'])?$package_array['corrected_duration']:$dataVariable['billsec'];
             if(isset($package_array['package_id']))
             {
                 $freeseconds = $package_array['freeseconds'];
 
-                if ($dataVariable['billsec'] > $freeseconds) {
+                if ($corrected_duration > $freeseconds) {
                     $dataVariable['calltype'] = "PACKAGE+";
                 } else {
                     $dataVariable['calltype'] = "PACKAGE";
