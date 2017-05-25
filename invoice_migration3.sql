@@ -1,1 +1,2 @@
-ALTER TABLE accounts ADD COLUMN invoice_template_id int DEFAULT 1
+ALTER TABLE accounts ADD COLUMN invoice_template_id int DEFAULT 1;
+ALTER TABLE cdrs MODIFY calltype ENUM('STANDARD','DID','FREE','CALLINGCARD', 'PACKAGE', 'PACKAGE+') DEFAULT 'STANDARD';

@@ -553,6 +553,22 @@ function did_fix_query_austrian(field, dialed_number, offset)
     return query_string
 end
 
+
+-- Get Consertis callerid from specific SIP fields set up bu Fusion
+function get_callerid_consertis()
+    local callerid_outbound = params:getHeader("variable_sip_h_X-ASTPP-Outbound")
+    local callerid_billing = params:getHeader("variable_sip_h_X-ASTPP-Billing")
+
+    if (callerid_billing == nil or callerid_outbound == nil) then
+        Logger.debug("[Functions] [GET_CALLERID_CONSERTIS] CallerID not found");
+        return nil
+    end
+
+    Logger.debug("[Functions] [GET_CALLERID_CONSERTIS] CallerID Outbound: "..callerid_outbound.." Billing: "..callerid_billing);    
+
+    return callerid_outbound, callerid_billing
+end
+
 --- Get CallerID normalization for support of {ani} and {name} keyword
 function normalize_callerid_ani(callerid)
     if (callerid ~= nil) then
