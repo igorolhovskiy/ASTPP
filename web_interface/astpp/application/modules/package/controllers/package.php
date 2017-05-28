@@ -286,7 +286,6 @@ For Email Broadcast when package is add
 		$count_all = $this->rates_model->getunblocked_package_pattern($accountid,false);
 		$paging_data = $this->form->load_grid_config($count_all, $_GET['rp'], $_GET['page']);
 		$json_data = $paging_data["json_paging"];
-
 		$query = $this->rates->rates_model->getunblocked_package_pattern($accountid,true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
 		$grid_fields = json_decode($this->rates->rates_form->build_block_pattern_list_for_customer());
 		$json_data['rows'] = $this->rates->form->build_grid($query, $grid_fields);
@@ -310,7 +309,7 @@ For Email Broadcast when package is add
 		echo $this->db->delete("package_patterns",$where);
 	}
     
-	function package_quick_search($module_name){
+	function package_quick_search(){
 		$action = $this->input->post();
 		$this->session->set_userdata('left_panel_search_package_pattern',"");
 		if(!empty($action['left_panel_search'])){
@@ -318,6 +317,20 @@ For Email Broadcast when package is add
 		}
 	}
 
+	function package_prefix_quick_search(){
+		$action = $this->input->post();
+		$this->session->set_userdata('origination_rate_list_search',"");
+		if(!empty($action['left_panel_search'])){
+			$this->session->set_userdata('origination_rate_list_search', array(
+				'pattern' => array(
+					'pattern-string' => 5,
+					'pattern' => $action['left_panel_search']
+				),
+				'restore_search' => 1
+			));
+			$this->session->set_userdata('advance_search', 1);
+		}
+	}
 
 	function package_patterns_import($edit_id) {
 		//echo "nick";exit;

@@ -80,9 +80,9 @@ Add For Package Inbound or Outbound or both?
 ASTPP  3.0 
 For Package edit on Name
 **/ 
-			array("Name", "170", "package_name", "", "", "","EDITABLE","true","center"),
+			array("Name", "250", "package_name", "", "", "","EDITABLE","true","center"),
 /***********************************/
-			array("Rate Group", "150", "pricelist_id", "name", "pricelists", "get_field_name","","true","center"),
+			// array("Rate Group", "150", "pricelist_id", "name", "pricelists", "get_field_name","","true","center"),
 			array("Included Seconds", "160", "includedseconds", "", "", "","","true","center"),
 /**
 ASTPP  3.0 
@@ -95,7 +95,7 @@ Add For Package Inbound or Outbound or both?
             Creation date,last modified date show in grid
             */
 			 array("Status", "140", "status", "status", "packages", "get_status","","true","center"),
-			array("Created Date", "120", "creation_date", "creation_date", "creation_date", "convert_GMT_to","","true","center"),
+			array("Created Date", "140", "creation_date", "creation_date", "creation_date", "convert_GMT_to","","true","center"),
 			array("Modified Date", "140", "last_modified_date", "last_modified_date", "last_modified_date", "convert_GMT_to","","true","center"),
 			/***************************************************************/
 			/*
