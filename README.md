@@ -18,3 +18,9 @@ https://groups.google.com/forum/#!forum/astpp
 
 Bug Tracker : 
 github.com/iNextrix/ASTPP/issues
+
+What to found in this fork
+ - Invoice templates
+ - Packages now taken from Rate Groups and assigned to customer directly
+ - Reworked billing, now rate rules applied on packages as well
+ - More to come...
