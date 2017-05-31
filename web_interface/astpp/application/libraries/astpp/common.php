@@ -758,6 +758,8 @@ class common {
 			"DID" => "DID",
 			"CALLINGCARD" => "CALLINGCARD",
 			"FREE" => "FREE",
+			'PACKAGE' => 'PACKAGE',
+			'PACKAGE+' => 'PACKAGE+'
 		);
 		return $status_array;
 	}
