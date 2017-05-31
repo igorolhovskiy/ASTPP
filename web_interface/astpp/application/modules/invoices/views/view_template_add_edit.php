@@ -34,9 +34,8 @@ tinymce.init({
 function preview_pdf() {
   var template = {
     'head_template': tinyMCE.get('head_template').getContent({format: 'raw'}),
-    'details_template': tinyMCE.get('details_template').getContent({format: 'raw'}),
-    'total_template': tinyMCE.get('total_template').getContent({format: 'raw'}),
-    'group_calls_template': tinyMCE.get('group_calls_template').getContent({format: 'raw'}),
+    'page1_template': tinyMCE.get('page1_template').getContent({format: 'raw'}),
+    'page2_template': tinyMCE.get('page2_template').getContent({format: 'raw'}),
     'footer_template': tinyMCE.get('footer_template').getContent({format: 'raw'})
   };
   $.ajax({

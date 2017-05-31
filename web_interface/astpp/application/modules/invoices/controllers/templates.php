@@ -138,12 +138,12 @@ class Templates extends MX_Controller {
         $template_data['logo'] = 'assets/images/logo_3.png';
         $template_data['strip'] = 'assets/images/bg_strip.png';
 
-        $first_page_content = $this->update_template($template['head_template'], $template_data, true);
-        $first_page_content .= $this->update_template($template['details_template'], $template_data, true);
-        $first_page_content .= $this->update_template($template['total_template'], $template_data, true);
-        $second_page_content = $this->update_template($template['group_calls_template'], $template_data, true);
+        $head_content = $this->update_template($template['head_template'], $template_data, true);
+        $first_page_content = $this->update_template($template['page1_template'], $template_data, true);
+
+		$second_page_content = $this->update_template($template['page2_template'], $template_data, true);
         $footer_content = $this->update_template($template['footer_template'], $template_data, true);
-        $this->prepare_pdf($first_page_content, $second_page_content, $footer_content);
+        $this->prepare_pdf($head_content, $first_page_content, $second_page_content, $footer_content);
         $content_pdf = $this->html2pdf->Output('', true);
 //            header('Content-type: application/pdf');
         $response = (object)array(
@@ -383,11 +383,11 @@ class Templates extends MX_Controller {
             };
 
 
-			$first_page_content = $print_parts_template('head_template');
-            $first_page_content .= $print_parts_template('page1_template');
+			$head_content = $print_parts_template('head_template');
+            $first_page_content = $print_parts_template('page1_template');
 			$second_page_content = $print_parts_template('page2_template');
             $footer_content = $print_parts_template('footer_template');
-            $this->prepare_pdf($first_page_content, $second_page_content, $footer_content);
+            $this->prepare_pdf($head_content, $first_page_content, $second_page_content, $footer_content);
 
 //            $content_pdf = $this->html2pdf->Output('', true);
 //            header('Content-type: application/pdf');
@@ -411,7 +411,7 @@ class Templates extends MX_Controller {
         }
     }
 
-    function prepare_pdf($first_page_content, $second_page_content, $footer_content) {
+    function prepare_pdf($head_content, $first_page_content, $second_page_content, $footer_content) {
         ob_start();
         $this->load->library('/html2pdf/html2pdf');
         $this->html2pdf = new HTML2PDF('P', 'A4', 'en', true, 'UTF-8', array(
@@ -426,7 +426,11 @@ class Templates extends MX_Controller {
         echo "<page backtop=\"0\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" footer=\"page\" style=\"font-size:10pt; margin:0; padding:0;\" >";
         echo "<style></style>";
 
+        echo $head_content;
         echo $first_page_content;
+		echo '<page_footer style="width: 100%;">';
+		echo $footer_content;
+		echo '</page_footer>';
 
         echo '<page_header>'.
             '<table class="page_header">'.
@@ -438,11 +442,14 @@ class Templates extends MX_Controller {
             '</page_header>'.
             '</page>';
 
-        echo $second_page_content;
+        if (!empty($second_page_content)) {
+			echo $head_content;
+			echo $second_page_content;
 
-        echo '<page_footer style="width: 100%;">';
-        echo $footer_content;
-        echo '</page_footer>';
+			echo '<page_footer style="width: 100%;">';
+			echo $footer_content;
+			echo '</page_footer>';
+		}
         $content = ob_get_clean();
         ob_clean();
         // echo $content; exit();
