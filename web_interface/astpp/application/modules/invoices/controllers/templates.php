@@ -364,17 +364,17 @@ class Templates extends MX_Controller {
 
             // parsing tbody with foreach attributes and update templates
             $print_parts_template = function($template_name) use (&$template, &$template_data) {
-				$templ = preg_replace_callback('/<tbody(.*)foreach="\$(\S+)"(.*)>(.*)<\/tbody>/iUsm',
+				$templ = preg_replace_callback('/(<table.*>\s*<thead.*>.*<\/thead>.*)<tbody(.*)foreach="\$(\S+)"(.*)>(.*)<\/tbody>\s*<\/table>/iUsm',
 					function($matches) use (&$template_data){
-						$item_name = $matches[2];
+						$item_name = $matches[3];
 						$tbody = '';
 						if (!empty($template_data[$item_name])) {
-							$tbody = "<tbody".$matches[1].$matches[3].">";
+							$tbody = "<tbody".$matches[2].$matches[4].">";
 							foreach($template_data[$item_name] as $i => $item) {
 								$template_data["i"] = $i;
-								$tbody .= $this->update_template($matches[4], $template_data);
+								$tbody .= $this->update_template($matches[5], $template_data);
 							}
-							$tbody .= "</tbody>";
+							$tbody = $matches[1].$tbody."</tbody></table>";
 						}
 						return $tbody;
 					}, $template[$template_name]);
@@ -423,7 +423,7 @@ class Templates extends MX_Controller {
 
         $this->html2pdf->pdf->SetDisplayMode('fullpage');
 
-        echo "<page backtop=\"0\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" footer=\"page\" style=\"font-size:10pt; margin:0; padding:0;\" >";
+        echo "<page backtop=\"0\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" style=\"font-size:10pt; margin:0; padding:0;\" >";
         echo "<style></style>";
 
         echo $head_content;
