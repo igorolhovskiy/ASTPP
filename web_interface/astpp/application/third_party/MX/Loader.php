@@ -163,13 +163,13 @@ class MX_Loader extends CI_Loader
 			list($path2, $file) = Modules::find($_alias, $this->_module, 'config/');	
 			($path2) AND $params = Modules::load_file($file, $path2, 'config');
 		}	
-			
+
 		if ($path === FALSE) {
-			
+
 			$this->_ci_load_class($library, $params, $object_name);
 			$_alias = $this->_ci_classes[$class];
-			
-		} else {		
+
+		} else {
 			
 			Modules::load_file($_library, $path);
 			
@@ -178,7 +178,7 @@ class MX_Loader extends CI_Loader
 			
 			$this->_ci_classes[$class] = $_alias;
 		}
-		
+
 		return CI::$APP->$_alias;
 	}
 
@@ -239,7 +239,7 @@ class MX_Loader extends CI_Loader
 
 	/** Load a module controller **/
 	public function module($module, $params = NULL) {
-		
+
 		if (is_array($module)) return $this->modules($module);
 
 		$_alias = strtolower(basename($module));

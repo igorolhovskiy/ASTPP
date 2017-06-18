@@ -86,10 +86,10 @@ class Modules
 
 		/* create or return an existing controller from the registry */
 		if ( ! isset(self::$registry[$alias])) {
-			
+
 			/* find the controller */
 			list($class) = CI::$APP->router->locate(explode('/', $module));
-	
+
 			/* controller cannot be located */
 			if (empty($class)) {
 				return;
@@ -97,13 +97,13 @@ class Modules
 	
 			/* set the module directory */
 			$path = APPPATH.'controllers/'.CI::$APP->router->fetch_directory();
-			
+
 			/* load the controller class */
 			$class = $class.CI::$APP->config->item('controller_suffix');
 			self::load_file($class, $path);
-			
+
 			/* create and register the new controller */
-			$controller = ucfirst($class);	
+			$controller = ucfirst($class);
 			self::$registry[$alias] = new $controller($params);
 		}
 		

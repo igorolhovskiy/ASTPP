@@ -31,7 +31,7 @@ class Templates extends MX_Controller {
         $this->load->model('templates_model');
         $this->load->dbutil();
 
-        if ($this->session->userdata('user_login') == FALSE)
+        if (!defined('CRON') && $this->session->userdata('user_login') == FALSE)
             redirect(base_url() . '/astpp/login');
     }
 

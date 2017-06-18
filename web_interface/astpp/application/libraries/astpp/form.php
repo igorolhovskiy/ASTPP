@@ -54,6 +54,9 @@ class Form {
      * adds raw html to the field array
      */
     function check_permissions() {
+    	if(defined('CRON')){
+    		return true;
+		}
         if ($this->CI->session->userdata('user_login') == TRUE) {
             $module_info = unserialize($this->CI->session->userdata("permited_modules"));
             if ($this->CI->session->userdata('userlevel_logintype') != 0 && $this->CI->session->userdata('userlevel_logintype') != 3) {
