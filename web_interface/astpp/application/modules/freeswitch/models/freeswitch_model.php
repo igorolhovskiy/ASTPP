@@ -93,7 +93,14 @@ Voicemail add in database
 		$log_type = $this->session->userdata("logintype");
         	
 		$reseller_id = $log_type==1 ? $account_data['reseller_id']:0;
-        
+
+		$where_cidr_mask = array("accountid" => $add_array['accountcode'], "name" => "IP_CIDR_" . $add_array['fs_username']);
+		$sip_device_cidr = $this->db_model->select("*", "ip_map", $where_cidr_mask, "id", "ASC", "1");
+		$is_sip_device_cidr = False;
+		if ($sip_device_cidr->num_rows > 0) {
+			$sip_device_cidr = $sip_device_cidr->result_array()[0]['ip'];
+			$is_sip_device_cidr = True;
+        }
 		$sip_profile_id = isset($add_array['sip_profile_id'])?$add_array['sip_profile_id']:$this->common->get_field_name('id','sip_profiles',array('name'=>'default'));
 	
 	$parms_array = array('password' => $add_array['fs_password'],
@@ -113,6 +120,11 @@ Voicemail add in database
 	ASTPP  3.0 
 	creation date add
 	*/
+
+	if ($is_sip_device_cidr) {
+		$parms_array_vars['auth-acl'] = $sip_device_cidr;
+	}
+
 	$new_array = array('creation_date'=>gmdate('Y-m-d H:i:s'),
 						   'username' => $add_array['fs_username'],
 						   'reseller_id'=>$reseller_id,
@@ -121,7 +133,7 @@ Voicemail add in database
 						   'dir_params' => json_encode($parms_array),
 						   'dir_vars' => json_encode($parms_array_vars),
 						   'sip_profile_id' => $sip_profile_id,
-			);  
+	);  
 	/****************************************8*/     
 	$this->db->insert('sip_devices', $new_array);
 /******
@@ -167,6 +179,20 @@ Voicemail edit
 		$add_array['sip_profile_id'] = $this->common->get_field_name('id', 'sip_profiles', array('name'=>'default'));
 	}
 	$add_array['status'] = isset($add_array['status']) ? $add_array['status'] : "0";
+
+
+	$where_cidr_mask = array("accountid" => $add_array['accountcode'], "name" => "IP_CIDR_" . $add_array['fs_username']);
+	$sip_device_cidr = $this->db_model->select("*", "ip_map", $where_cidr_mask, "id", "ASC", "1");
+	$is_sip_device_cidr = False;
+	if ($sip_device_cidr->num_rows > 0) {
+		$sip_device_cidr = $sip_device_cidr->result_array()[0]['ip'];
+		$is_sip_device_cidr = True;
+    }
+
+    if ($is_sip_device_cidr) {
+    	$parms_array['auth-acl'] = $sip_device_cidr;
+    }
+
 	/*
 	ASTPP  3.0  edit modified date
 	*/
