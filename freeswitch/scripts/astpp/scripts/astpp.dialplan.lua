@@ -86,7 +86,10 @@ if (accountcode == nil or accountcode == '') then
         from_ip = params:getHeader('Hunt-Network-Addr')
     end 
 
-    authinfo = doauthentication(destination_number,from_ip)
+    local sip_authorized = params:getHeader("variable_sip_authorized")
+    local sip_from_user = params:getHeader("variable_sip_from_user")
+
+    authinfo = doauthentication(destination_number,from_ip, sip_authorized, sip_from_user)
 
     if (authinfo ~= nil and authinfo['type'] == 'acl') then      
         accountcode = authinfo['account_code']

@@ -120,7 +120,19 @@ function check_local_call(destination_number)
 end
 
 -- Do Authentication 
-function doauthentication (destination_number,from_ip)
+function doauthentication (destination_number,from_ip, sip_authorized, sip_from_user)
+
+    if (sip_authorized == 'true' and sip_from_user ~= nil)
+        local query = "SELECT number AS account_code FROM "..TBL_USERS.." WHERE id = (SELECT accountid FROM "..TBL_SIP_DEVICES.." WHERE username = \""..sip_from_user.."\");"
+        Logger.debug("[DOAUTHENTICATION] Query :" .. query)
+        assert (dbh:query(query, function(u)
+            authinfo = u;
+        end))
+        if (authinfo ~= nil and authinfo ~= "") 
+            authinfo['name'] = authinfo['account_code'];
+            return authinfo
+        end
+    end
     return ipauthentication (destination_number,from_ip)
 end
 
@@ -133,8 +145,8 @@ function ipauthentication(destination_number,from_ip)
     
     local ipinfo;
     assert (dbh:query(query, function(u)
-    ipinfo = u;
-    ipinfo ['type'] = 'acl';
+        ipinfo = u;
+        ipinfo ['type'] = 'acl';
     end))
     return ipinfo;
 end
