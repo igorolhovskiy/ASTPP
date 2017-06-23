@@ -129,6 +129,7 @@ function doauthentication (destination_number,from_ip, sip_authorized, sip_from_
             authinfo = u;
         end))
         if (authinfo ~= nil and authinfo ~= "") then
+            Logger.debug("[DOAUTHENTICATION] Accountcode found:" .. authinfo['account_code'])
             authinfo['name'] = authinfo['account_code'];
             return authinfo
         end
