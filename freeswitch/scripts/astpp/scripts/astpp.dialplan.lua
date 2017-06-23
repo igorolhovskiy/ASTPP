@@ -91,13 +91,16 @@ if (accountcode == nil or accountcode == '') then
 
     authinfo = doauthentication(destination_number,from_ip, sip_authorized, sip_from_user)
 
-    if (authinfo ~= nil and authinfo['type'] == 'acl') then      
-        accountcode = authinfo['account_code']
-        if (authinfo['prefix'] ~= '') then
-            destination_number = do_number_translation(authinfo['prefix'].."/*",destination_number)
+    if (authinfo ~= nil) then 
+        if (authinfo['type'] == 'acl') then
+            if (authinfo['prefix'] ~= '') then
+                destination_number = do_number_translation(authinfo['prefix'].."/*",destination_number)
+            end
+            auth_type = 'acl';
+            accountname = authinfo['name'] or ""
         end
-        auth_type = 'acl';
         accountname = authinfo['name'] or ""
+        accountcode = authinfo['account_code'] or ""
     end
 end
 
