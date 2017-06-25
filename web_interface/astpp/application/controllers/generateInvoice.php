@@ -69,7 +69,9 @@ class GenerateInvoice extends MX_Controller {
                             if (strtotime($start_date) >= strtotime(gmdate("Y-m-d H:i:s"))) {
                                 $start_date = gmdate("Y-m-d H:i:s");
                             }
-                            $end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 month"));
+                            //$end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 month"));
+                            // set end date to day before generate invoice
+                            $end_date = gmdate("Y-m-d 23:59:59", strtotime(gmdate("Y-m-d H:i:s")." - 1 days"));
                             $this->Generate_Monthly_invoice($account_value, $start_date, $end_date);
                         }
                         break;
