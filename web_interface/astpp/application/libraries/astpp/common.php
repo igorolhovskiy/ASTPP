@@ -521,10 +521,11 @@ class common {
      * @param string $select
      */
     function get_invoice_date($select, $accountid = 0, $reseller_id, $order_by = 'id') {
-        $where = array("reseller_id" => $reseller_id);
+        $where = "reseller_id = $reseller_id";
         if ($accountid > 0) {
-            $where['accountid'] = $accountid;
+            $where .= " AND accountid = $accountid";
         }
+        $where .= " AND (generate_type=0 OR confirm=1)";
         $invoice_res = $this->CI->db_model->select($select, "invoices", $where, $order_by, "DESC", "1", "0");
         if ($invoice_res->num_rows > 0) {
             $invoice_info = (array)$invoice_res->first_row();

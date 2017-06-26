@@ -423,32 +423,38 @@ class Templates extends MX_Controller {
 
         $this->html2pdf->pdf->SetDisplayMode('fullpage');
 
-        echo "<page backtop=\"0\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" style=\"font-size:10pt; margin:0; padding:0;\" >";
+        echo "<page backtop=\"40mm\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" style=\"font-size:10pt; margin:0; padding:0;\" >";
         echo "<style></style>";
-
+		echo '<page_header>';
         echo $head_content;
-        echo $first_page_content;
+        echo '</page_header>';
 		echo '<page_footer style="width: 100%;">';
 		echo $footer_content;
 		echo '</page_footer>';
+		echo $first_page_content;
+		echo '</page>';
 
-        echo '<page_header>'.
-            '<table class="page_header">'.
-            '<tr>'.
-            '    <td style="width: 100%;height:20px; text-align: left;">'.
-            '    </td>'.
-            '</tr>'.
-            '</table>'.
-            '</page_header>'.
-            '</page>';
+//        echo '<page_header>'.
+//            '<table class="page_header">'.
+//            '<tr>'.
+//            '    <td style="width: 100%;height:20px; text-align: left;">'.
+//            '    </td>'.
+//            '</tr>'.
+//            '</table>'.
+//            '</page_header>'.
+//            '</page>';
 
         if (!empty($second_page_content)) {
+			echo "<page backtop=\"30mm\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" style=\"font-size:10pt; margin:0; padding:0;\" >";
+			echo "<style></style>";
+			echo '<page_header>';
 			echo $head_content;
-			echo $second_page_content;
-
+			echo '</page_header>';
 			echo '<page_footer style="width: 100%;">';
 			echo $footer_content;
 			echo '</page_footer>';
+			echo $second_page_content;
+			echo '</page>';
 		}
         $content = ob_get_clean();
         ob_clean();

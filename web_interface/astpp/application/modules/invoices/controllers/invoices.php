@@ -36,6 +36,7 @@ class Invoices extends MX_Controller {
 		$this->load->library("astpp/email_lib");
 		$this->load->library('fpdf');
 		$this->load->library('pdf');
+		$this->load->library("astpp/common");
 
 		if ($this->session->userdata('user_login') == FALSE)
 			redirect(base_url() . '/astpp/login');
@@ -515,6 +516,17 @@ class Invoices extends MX_Controller {
 		  $invoice_total_query=$this->db->query($query);
 		  $invoice_total_query= $invoice_total_query->result_array();
 		  $data = array('amount' =>$this->common_model->add_calculate_currency($response_arr['total_val_final'],"","",true,false),'confirm'=>$confirm,'notes'=>$response_arr['invoice_notes']);
+		  if ($confirm === 1) {
+			  $invoice_conf = $this->get_invoice_conf_reseller_id($response_arr['reseller_id']);
+			  $last_invoice_ID = $this->common->get_invoice_date("invoiceid", "", $response_arr['reseller_id']);
+			  if($last_invoice_ID && $last_invoice_ID > 0){
+				  $last_invoice_ID = ($last_invoice_ID+1);
+			  }else{
+				  $last_invoice_ID = $invoice_conf['invoice_start_from'];
+			  }
+			  $last_invoice_ID = str_pad($last_invoice_ID,(strlen($last_invoice_ID)+4),'0',STR_PAD_LEFT);
+			  $data['invoiceid'] = $last_invoice_ID;
+		  }
 		  $this->db->where("id", $response_arr['invoiceid']);        
 		  $this->db->update("invoices", $data);
 	if($confirm == 1){
@@ -577,6 +589,26 @@ class Invoices extends MX_Controller {
 		  $this->session->set_flashdata('astpp_errormsg', 'Invoice updated successfully!'); 
 	  	  redirect(base_url() . 'invoices/invoice_list/');
 	}
+
+	function get_invoice_conf_reseller_id($reseller_id) {
+		$invoice_conf =  array();
+		if ($reseller_id == 0) {
+			$where = array("accountid"=> 1);
+		} else {
+			$where = array("accountid"=> $reseller_id);
+		}
+		$query = $this->db_model->getSelect("*", "invoice_conf", $where);
+		if($query->num_rows >0){
+			$invoice_conf = $query->result_array();
+			$invoice_conf = $invoice_conf[0];
+		} else{
+			$query = $this->db_model->getSelect("*", "invoice_conf",array("accountid"=> 1));
+			$invoice_conf = $query->result_array();
+			$invoice_conf = $invoice_conf[0];
+		}
+		return $invoice_conf;
+	}
+
 	function invoice_automatically_payment_edit_save(){
 	$response_arr=$_POST;
 	if(isset($response_arr['save'])){
@@ -1444,6 +1476,8 @@ function invoice_screen(){
 			$last_invoice_ID = $invoice_conf['invoice_start_from'];
 		}
 		$last_invoice_ID =str_pad($last_invoice_ID,(strlen($last_invoice_ID)+4),'0',STR_PAD_LEFT);
+		//set invoice number to 00000000 form not confirmed manual invoice
+		$last_invoice_ID = '0000';
 		if($accountdata['posttoexternal'] == 1){
 	   			$balance = ($accountdata['credit_limit']-$accountdata['balance']);
 		}else{
