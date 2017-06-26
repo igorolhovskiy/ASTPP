@@ -97,7 +97,6 @@ if (accountcode == nil or accountcode == '') then
                 destination_number = do_number_translation(authinfo['prefix'].."/*",destination_number)
             end
             auth_type = 'acl';
-            accountname = authinfo['name'] or ""
         end
         accountname = authinfo['name'] or ""
         accountcode = authinfo['account_code'] or ""
