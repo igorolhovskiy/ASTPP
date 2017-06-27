@@ -103,10 +103,15 @@ class Templates_model extends CI_Model {
             'comment' => ''
         );
         $variables[] = array(
-            'name' => 'to_date',
-            'query' => 'date("Y-m-d", strtotime({$invoicedata.to_date}))',
-            'comment' => ''
-        );
+			'name' => 'to_date',
+			'query' => 'date("Y-m-d", strtotime({$invoicedata.to_date}))',
+			'comment' => ''
+		);
+		$variables[] = array(
+			'name' => 'invoice_date',
+			'query' => 'date("Y-m-d", strtotime({$invoicedata.invoice_date}))',
+			'comment' => ''
+		);
         $variables[] = array(
             'name' => 'due_date',
             'query' => 'new DateTime()',
@@ -144,11 +149,37 @@ class Templates_model extends CI_Model {
         );
         $variables[] = array(
             'name' => 'group_call',
-            'query' => 'select cdrs.*, routes.group_calls_id, group_calls.name as group_calls_name, SUM(cdrs.billseconds) as total_seconds\', SUM(cdrs.debit) as total_debit\' from cdrs join routes on routes.pattern = cdrs.pattern join group_calls on group_calls.id = routes.group_calls_id\' where cdrs.callstart > $from and cdrs.callstart < $to and cdrs.pricelist_id > 0 and cdrs.billseconds > 0 and cdrs.accountid = $user_id and routes.group_calls_id > 0 group by routes.group_calls_id',
+            'query' => 'select cdrs.*, routes.group_calls_id, group_calls.name as group_calls_name, SUM(cdrs.billseconds) as total_seconds, SUM(cdrs.debit) as total_debit from cdrs join routes on routes.pattern = cdrs.pattern join group_calls on group_calls.id = routes.group_calls_id where cdrs.callstart > $from and cdrs.callstart < $to and cdrs.pricelist_id > 0 and cdrs.billseconds > 0 and cdrs.accountid = $user_id and routes.group_calls_id > 0 group by routes.group_calls_id',
             'comment' => ''
         );
+		$variables[] = array(
+			'name' => 'destination_group_call',
+			'query' => 'select routes.comment, COUNT(*) AS count_calls,, SUM(cdrs.billseconds) as total_seconds, SUM(cdrs.debit) as total_debit from cdrs join routes on routes.pattern = cdrs.pattern AND routes.pricelist_id = cdrs.pricelist_id  where cdrs.callstart > $from and cdrs.callstart < $to and cdrs.pricelist_id > 0 and cdrs.billseconds > 0 and cdrs.accountid = $user_id group by routes.comment',
+			'comment' => ''
+		);
         $vars_query = $this->db_model->getSelect("*", "invoice_template_vars",'');
         $variables = array_merge($variables, $vars_query->result_array());
         return $variables;
     }
+
+	function get_destination_group_calls_cdrs($user_id, $from, $to) {
+		$this->db->select('routes.comment as destination');
+		$this->db->select('count(*) as count_calls');
+		$this->db->select('SUM(cdrs.billseconds) as total_seconds');
+		$this->db->select('SUM(cdrs.debit) as total_debit');
+
+		$this->db->from('cdrs');
+
+		$this->db->join('routes', 'routes.pattern = cdrs.pattern AND routes.pricelist_id = cdrs.pricelist_id');
+
+		$this->db->where('cdrs.callstart >', $from);
+		$this->db->where('cdrs.callstart <', $to);
+		$this->db->where('cdrs.pricelist_id >', 0);
+		$this->db->where('cdrs.billseconds >', 0);
+		$this->db->where('cdrs.accountid', $user_id);
+
+		$this->db->group_by('routes.comment');
+
+		return $this->db->get()->result_array();
+	}
 }

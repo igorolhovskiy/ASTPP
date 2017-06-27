@@ -92,7 +92,7 @@ class Templates extends MX_Controller {
     function add() {
         $data['page_title'] = 'Add Invoice template';
         $where = array('id' => 1);
-        $template = $this->db_model->getSelect("head_template, details_template, total_template, group_calls_template, footer_template",
+        $template = $this->db_model->getSelect("head_template, page1_template, page2_template, footer_template",
             "invoice_templates", $where);
         foreach ($template->result_array() as $key => $value) {
             $edit_data = $value;
@@ -197,7 +197,10 @@ class Templates extends MX_Controller {
         $template_data['to_date'] = $to_date;
         $duedate             = strtotime($invoicedata['due_date']);
         $due_date            = date("Y-m-d", $duedate);
-        $template_data['due_date'] = $due_date;
+		$template_data['due_date'] = $due_date;
+		$invoicedate             = strtotime($invoicedata['invoice_date']);
+		$invoice_date            = date("Y-m-d", $invoicedate);
+        $template_data['invoice_date'] = $invoice_date;
         $today               = new DateTime();
         $template_data['today'] = $today;
 
@@ -287,6 +290,17 @@ class Templates extends MX_Controller {
             }
 
         }
+
+        $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $from_date, $to_date);
+        $i = 1;
+        foreach ($destination_group_calls as &$group_row) {
+			$group_row['total_seconds'] = $this->common->convert_sec_to_minsec($group_row['total_seconds']);
+			$group_row['total_debit'] = $this->common->currency_decimal($group_row['total_debit']);
+			$group_row['num'] = $i;
+			$i++;
+		}
+		$template_data['destination_group_calls'] = $destination_group_calls;
+		unset($group_row);
 
         // Try to add user custom variables
         $vars_query = $this->db_model->getSelect("*", "invoice_template_vars",'');
