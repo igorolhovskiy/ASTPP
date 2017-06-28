@@ -130,7 +130,7 @@ function doauthentication (destination_number,from_ip, sip_authorized, sip_from_
     end
 
     if (sip_authorized == 'true' and sip_from_user ~= nil) then
-        local query = "SELECT number AS account_code FROM "..TBL_USERS.." WHERE id = (SELECT accountid FROM "..TBL_SIP_DEVICES.." WHERE username = \""..sip_from_user.."\")"
+        local query = "SELECT number AS account_code FROM "..TBL_USERS.." WHERE id = (SELECT accountid FROM "..TBL_SIP_DEVICES.." WHERE username = \""..sip_from_user.."\" AND status = 0) AND status=0 AND deleted=0"
         Logger.debug("[DOAUTHENTICATION] Query :" .. query)
         assert (dbh:query(query, function(u)
             authinfo = u;
