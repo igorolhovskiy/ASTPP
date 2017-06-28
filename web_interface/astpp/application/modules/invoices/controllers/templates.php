@@ -291,7 +291,7 @@ class Templates extends MX_Controller {
 
         }
 
-        $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $from_date, $to_date);
+        $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $invoicedata['from_date'], $invoicedata['to_date']);
         $i = 1;
         foreach ($destination_group_calls as &$group_row) {
 			$group_row['total_seconds'] = $this->common->convert_sec_to_minsec($group_row['total_seconds']);
