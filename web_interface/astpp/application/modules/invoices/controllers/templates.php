@@ -317,7 +317,7 @@ class Templates extends MX_Controller {
 					if (count(array_keys($row_query)) === 1) {
 						$template_data[$vars['name']] = array_keys($row_query)[0];
 					} else {
-						$template_data[$vars['name']] = $row_query;
+						$template_data[$vars['name']] = array($row_query);
 					}
 				}
             }
