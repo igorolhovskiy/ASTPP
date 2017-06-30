@@ -228,9 +228,12 @@ class GenerateInvoice extends MX_Controller {
         $this->db->where(array("id" => $invoiceid));
         $this->db->update("invoices", $updateArr);
 
+        // Disable setting of balance in 0
+        /*
         $updateArr = array("balance" => "0.00");
         $this->db->where(array("id" => $accountid));
         $this->db->update("accounts", $updateArr);
+        */
 
         return true;
     }
