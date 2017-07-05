@@ -61,7 +61,10 @@ class GenerateInvoice extends MX_Controller {
                             $start_date = gmdate("Y-m-d H:i:s");
                         }
                         $end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 days"));
-                        $this->Generate_Daily_invoice($account_value, $start_date, $end_date);
+                        $yesterday = gmdate("Y-m-d 23:59:59", strtotime(gmdate("Y-m-d H:i:s")." - 1 days"));
+                        if (strtotime($end_date) <= strtotime($yesterday)) {
+							$this->Generate_Daily_invoice($account_value, $start_date, $end_date);
+						}
                         break;
                     case 2:
                         if (date("d") == $account_value['invoice_day']) {
@@ -144,7 +147,9 @@ class GenerateInvoice extends MX_Controller {
             $invoice_total = $this->set_invoice_total($invoiceid, $accountdata['id']);
             $this->download_invoice($invoiceid, $accountdata, $invoice_conf);
         } else {
-            $invoiceid = $this->create_invoice($accountdata, $start_date, $end_date, $last_invoice_ID, $invoice_conf['invoice_prefix'], $invoice_conf);
+            $last_invoice_ID = '0000000';
+            $invoice_type = 'zero';
+            $invoiceid = $this->create_invoice($accountdata, $start_date, $end_date, $last_invoice_ID, $invoice_conf['invoice_prefix'], $invoice_conf, $invoice_type);
             $sort_order = $this->common_model->apply_invoice_taxes($invoiceid, $accountdata, $start_date);
             $invoice_total = $this->set_invoice_total($invoiceid, $accountdata['id']);
         }
@@ -194,7 +199,7 @@ class GenerateInvoice extends MX_Controller {
     /**
      * @param string $last_invoice_ID
      */
-    function create_invoice($account, $from_date, $to_date, $last_invoice_ID, $INVprefix, $invoiceconf) {
+    function create_invoice($account, $from_date, $to_date, $last_invoice_ID, $INVprefix, $invoiceconf, $invoice_type = '') {
         //$due_date = gmdate("Y-m-d H:i:s",strtotime($to_date." +".$invoiceconf['interval']." days"));
         if ($invoiceconf['interval'] > 0) {
             $due_date = gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s")." +".$invoiceconf['interval']." days"));
@@ -204,17 +209,21 @@ class GenerateInvoice extends MX_Controller {
         // echo "due daye-------".$due_date.'----------'.$to_date.'------------> Invoice interval'.$invoiceconf['interval']; 
         $balance = ($account['credit_limit'] - $account['balance']);
         $automatic_flag = self::$global_config['system_config']['automatic_invoice'];
-	if ($automatic_flag == 1) {
+    if ($automatic_flag == 1) {
 	        $invoice_data = array("accountid" => $account['id'], "invoice_prefix" => $INVprefix, "invoiceid" => $last_invoice_ID, "reseller_id" =>
             $account['reseller_id'], "invoice_date" => gmdate("Y-m-d H:i:s"), "from_date" => $from_date, "to_date" => $to_date, "due_date" => $due_date, "status" => 1, "amount" => "0.00", "balance" => $balance);
 	} else {
 	        $invoice_data = array("accountid" => $account['id'], "invoice_prefix" => $INVprefix, "invoiceid" => $last_invoice_ID, "reseller_id" =>
             $account['reseller_id'], "invoice_date" => gmdate("Y-m-d H:i:s"), "from_date" => $from_date, "to_date" => $to_date, "due_date" => $due_date, "status" => 1, "amount" => "0.00", "balance" => $balance, "confirm" => 1);
 	}
+	if ($invoice_type === 'zero') {
+		$invoice_data['confirm'] = 0;
+		$invoice_data['generate_type'] = 2;
+    }
         // echo "<pre>"; print_r($invoice_data); exit;
         $this->db->insert("invoices", $invoice_data);
         $invoiceid = $this->db->insert_id();
-	if ($automatic_flag == 0) {
+	if ($automatic_flag == 0 && $invoice_type !== 'zero') {
             $this->download_invoice($invoiceid, $account, $invoiceconf);
 	}
         return $invoiceid;

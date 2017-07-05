@@ -57,6 +57,7 @@ Invoice manually
 		if($flag){
 		  $this->db->where('deleted',0);
 		  $this->db->order_by('invoice_date','desc');
+		  $this->db->order_by('invoiceid','desc');
 		  $this->db->limit($limit, $start);
 		}
 		$result=$this->db->get('invoices');
@@ -99,6 +100,7 @@ Invoice manually
 		 }
 		 if($flag){
 	  $this->db->order_by('invoice_date','desc');
+			 $this->db->order_by('invoiceid','desc');
 	  $this->db->limit($limit, $start);
 		 }
 		 $result=$this->db->get('invoices');

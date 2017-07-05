@@ -145,7 +145,9 @@ class Invoices extends MX_Controller {
 		  }
 		  $download="<a  href=" . $url .$value['id'].'/00_'.$value['invoice_prefix'].$value['invoiceid']. " class='btn btn-royelblue btn-sm'  title='Download Invoice' ><i class='fa fa-cloud-download fa-fw'></i></a>&nbsp";
 		  if($value['type'] == 'I'){
-		if($value['confirm'] ==0){
+			  if ($value['generate_type'] == 2 ) { // zero invoice
+				  $payment = '';
+			  } else if($value['confirm'] ==0){
 			if($value['generate_type'] ==1){
 					  $payment = '<a href="'. base_url() .'invoices/invoice_manually_edit/' . $value['id'] . '" class="btn btn-royelblue btn-sm"  title="Edit"><i class="fa fa-pencil-square-o fa-fw"></i></a>';
 			}else{
@@ -154,7 +156,7 @@ class Invoices extends MX_Controller {
   				$id=$value['id'];       
 				$delete_button="<a onclick='invoice_delete($id)' class='btn btn-royelblue btn-sm'  title='Delete' ><i class='fa fa-trash fa-fw'></i></a>&nbsp";
 
-		}else{
+		} else {
 					 if($outstanding > 0){
 				$payment = '<a style="padding: 0 8px;" href="'. base_url() .'invoices/invoice_summary/' . $value['id'] . '" class="btn btn-warning"  title="Payment">Unpaid</i></a>';
 					 }else{
@@ -169,7 +171,9 @@ class Invoices extends MX_Controller {
 		   $account_array = $account_arr->result_array();
 			if($value['generate_type'] == 1){
 		$invoice_type='Manually';
-	   }else{
+	   } else if($value['generate_type'] == 2) {
+				$invoice_type='Zero';
+			}else{
 		$invoice_type='Automatically';
 	   }    
 	   if($value['deleted'] == 1){
