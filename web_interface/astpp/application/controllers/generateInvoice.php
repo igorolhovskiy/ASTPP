@@ -244,6 +244,10 @@ class GenerateInvoice extends MX_Controller {
         $this->db->update("accounts", $updateArr);
         */
 
+        // Set to zero counters for account
+		$this->db->where(array('accountid' => $accountid));
+		$this->db->delete('counters');
+
         return true;
     }
 
