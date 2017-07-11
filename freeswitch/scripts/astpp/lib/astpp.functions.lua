@@ -446,7 +446,12 @@ function package_calculation(destination_number,userinfo,call_direction)
                     -- ?????? TODO
                     -- userinfo['balance'] = 100
 
-                    userinfo['NO_SUFFICIENT_FUND'] = ''
+                    --userinfo['NO_SUFFICIENT_FUND'] = ''
+                    -- Disable ERRORS on account if any
+                    if (userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND') then
+                        userinfo['ACCOUNT_ERROR'] = ''
+                        Logger.info("Allowing call with negative balance due to package")
+                    end
                     remaining_sec = remaining_sec + 5
                     package_maxlength = remaining_sec / 60; 
             end
