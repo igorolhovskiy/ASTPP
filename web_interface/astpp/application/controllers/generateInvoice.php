@@ -150,6 +150,7 @@ class GenerateInvoice extends MX_Controller {
             $last_invoice_ID = '0000000';
             $invoice_type = 'zero';
             $invoiceid = $this->create_invoice($accountdata, $start_date, $end_date, $last_invoice_ID, $invoice_conf['invoice_prefix'], $invoice_conf, $invoice_type);
+			$this->update_cdrs_data($accountdata['id'], $invoiceid, $start_date, $end_date);
             $sort_order = $this->common_model->apply_invoice_taxes($invoiceid, $accountdata, $start_date);
             $invoice_total = $this->set_invoice_total($invoiceid, $accountdata['id']);
         }
