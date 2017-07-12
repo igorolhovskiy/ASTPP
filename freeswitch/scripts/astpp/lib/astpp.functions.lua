@@ -441,12 +441,17 @@ function package_calculation(destination_number,userinfo,call_direction)
             end
             
             remaining_sec = tonumber(package_info['includedseconds']) - tonumber(freeseconds)
-            Logger.info("Remaining Sec : "..remaining_sec)
+            Logger.info("[package] Remaining Sec : "..remaining_sec)
             if(remaining_sec > 0) then
                     -- ?????? TODO
                     -- userinfo['balance'] = 100
 
-                    userinfo['NO_SUFFICIENT_FUND'] = ''
+                    --userinfo['NO_SUFFICIENT_FUND'] = ''
+                    -- Disable ERRORS on account if any
+                    if (userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND') then
+                        userinfo['ACCOUNT_ERROR'] = ''
+                        Logger.info("[packages] Allowing call with negative balance due to package")
+                    end
                     remaining_sec = remaining_sec + 5
                     package_maxlength = remaining_sec / 60; 
             end
