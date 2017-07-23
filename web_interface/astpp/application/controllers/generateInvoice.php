@@ -168,8 +168,13 @@ class GenerateInvoice extends MX_Controller {
             //echo '<pre>'; print_r($cdr_data); exit;
             foreach ($cdr_data as $cdrvalue) {
                 $cdrvalue['debit'] = round($cdrvalue['debit'], self::$global_config['system_config']['decimalpoints']);
+                if ($cdrvalue['calltype'] === 'STANDARD') {
+                    $description = 'Gesprächsgebühren '.$start_date." - ".$end_date;
+                } else {
+                    $description = $cdrvalue['calltype']." CALLS for the period (".$start_date." to ".$end_date.")";
+                }
                 $tempArr = array("accountid" => $account['id'], "reseller_id" => $account['reseller_id'], "item_id" => "0",
-                    "description" => $cdrvalue['calltype']." CALLS for the period (".$start_date." to ".$end_date.")", "debit" => $cdrvalue['debit'], "item_type" => $cdrvalue['calltype'], "created_date" => $end_date);
+                    "description" => $description, "debit" => $cdrvalue['debit'], "item_type" => $cdrvalue['calltype'], "created_date" => $end_date);
                 $this->db->insert("invoice_details", $tempArr);
             }
         }

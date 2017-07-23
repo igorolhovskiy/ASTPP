@@ -208,7 +208,8 @@ class Templates extends MX_Controller {
         $this->db->where('item_type <>', 'INVPAY');
         $invoice_details = $this->db_model->getSelect('*', 'invoice_details', array(
             "invoiceid" => $invoicedata['id'],
-            'item_type <>' => 'TAX'
+            'item_type <>' => 'TAX',
+			'debit <> ' => '0'
         ));
         $invoice_details = $invoice_details->result_array();
         $total_sum       = 0;
