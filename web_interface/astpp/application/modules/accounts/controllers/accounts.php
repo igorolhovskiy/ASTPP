@@ -2506,8 +2506,153 @@ function reseller_invoice_config($id=''){
 	 function customer_global_grid_list(){
 	  echo gettext($_POST['display']); 
  	}
- 	
- 	
+
+	function customer_products($id)
+	{
+		$data = array();
+
+		$data["page_title"] = "Rents Products";
+
+		$rp = $this->input->get('rp');
+		$page = $this->input->get('page');
+		$create = $this->input->get('create');
+		$save = $this->input->get('save');
+		$edit = $this->input->get('edit');
+		$delete = $this->input->get('delete');
+		$delete_change = $this->input->get('delete_change');
+		$logintype = $this->session->userdata('userlevel_logintype');
+
+		if($rp && !empty($rp) || $page && !empty($page)) $this->rentUserProductsByUserId($id);
+		if($logintype == -1) {
+			if($create && !empty($create)) $this->createUserRentProduct($id);
+			if($save && !empty($save)) $this->saveUserRentProduct($id);
+			if($delete && !empty($delete)) $this->deleteUserRentProduct($delete, $id);
+			if($delete_change && !empty($delete_change)) $this->deleteUserRentProduct(FALSE, $id);
+		}
+
+
+		$accountinfo = $this->session->userdata('accountinfo');
+
+		$reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
+		$where = array('id' => $id, "reseller_id" => $reseller_id);
+		$account_res = $this->db_model->getSelect("type", "accounts", $where);
+		if ($account_res->num_rows > 0) {
+			$account_data = (array) $account_res->first_row();
+			$accounttype = strtolower($this->common->get_entity_type('', '', $account_data['type']));
+			$data['grid_fields'] = $this->accounts_form->getRentTable($id);
+			$data['grid_buttons'] = $this->accounts_form->getRentActiveButtons($id);
+			$data['user_id'] = $id;
+			$this->load->view('view_customer_rent', $data);
+		} else {
+			redirect(base_url() . 'accounts/customer_list/');
+			exit;
+		}
+	}
+
+	function rentUserProductsByUserId($id)
+	{
+		header("Content-Type: application/json");
+
+		$json_data = array();
+
+		$this->load->model('products/rent_model');
+
+		$rents = $this->rent_model->getCollection(array('rent_products.delete_at' => NULL, 'rent_products.user_id' => $id), 'rent_products.id', 'desc');
+		$rentsCount = count($rents);
+
+		$paging_data = $this->form->load_grid_config($rentsCount, $_GET['rp'], $_GET['page']);
+
+		$json_data = $paging_data["json_paging"];
+		$limit = array($paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
+
+		$query = $this->rent_model->getCollection(array('rent_products.delete_at' => NULL, 'rent_products.user_id' => $id), 'rent_products.id', 'desc', $limit, true);
+
+		$json_data['rows'] = $this->form->build_grid($query, json_decode($this->accounts_form->getRentTable($id)));
+
+		exit(json_encode($json_data));
+	}
+
+	function createUserRentProduct($id)
+	{
+		$data = array();
+		$formData = array();
+		$formInputs = array(
+			'uid' => $id
+		);
+
+		$data['title'] = "Create Rent";
+
+		$this->load->model('products/product_model');
+		$formData['product_id'] = $this->product_model->getCollection(array('delete_at' => NULL), 'id', 'desc', FALSE, TRUE);
+
+		$data['form'] = $this->form->build_form($this->accounts_form->getRentForm($formInputs), $formData);
+		die($this->load->view('view_customer_create_rent', $data, TRUE));
+	}
+
+	function saveUserRentProduct($user_id = FALSE)
+	{
+		$product_id = $this->input->post('id');
+		$count = $this->input->post('count');
+		$payment_type = $this->input->post('payment_type');
+		$leftpayments = $this->input->post('leftpayments');
+		if(!$product_id || !$user_id) throw new Exception("Create rent error: not change user or product");
+
+		$data = array(
+			'user_id' => $user_id,
+			'product_id' => $product_id,
+			'count' => $count?: 1,
+			'payment_type' => $payment_type?: null,
+			'leftpayments' => $leftpayments?: null
+		);
+
+		$this->load->model('products/rent_model');
+		$this->rent_model->setData($data)->save();
+
+		redirect("accounts/customer_products/{$user_id}");
+	}
+
+	function deleteUserRentProduct($rentId = FALSE, $user_id)
+	{
+		$this->load->model('products/rent_model');
+
+		$postData = $this->input->post('selected_ids');
+
+		if($postData && !empty($postData)) {
+			$selected_rents = explode(",", str_replace('\'', '', $this->input->post('selected_ids')));
+		}
+
+		if($rentId) {
+
+			$this->rent_model->delete($rentId);
+
+		} elseif($selected_rents && !empty($selected_rents)) {
+
+			foreach ($selected_rents as $key => $value) {
+				$this->rent_model->delete(intval($value));
+			}
+		}
+
+		redirect("accounts/customer_products/{$user_id}");
+	}
+
+	function reseller_delete_refill_report($edit_id){
+		$this->customer_delete_refill_report($edit_id);
+	}
+	function provider_delete_refill_report($edit_id) {
+		$this->customer_delete_refill_report($edit_id);
+	}
+
+	function customer_delete_refill_report($edit_id) {
+		$data = $this->db->get_where('payments', array('id' => $edit_id))->row();
+		$id = $data->accountid;
+		$credit = $data->credit;
+		$account_balance = $this->common->get_field_name('balance', 'accounts', $id);
+		$newbalance = $account_balance-$credit;
+		$this->db->update('accounts', array('balance'=>$account_balance-$credit), "id = $id");
+		$this->db->delete('payments', array('id' => $edit_id));
+		redirect(base_url() . 'accounts/customer_refillreport/'.$id);
+	}
+
 }
 ?>
  

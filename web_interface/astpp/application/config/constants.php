@@ -66,7 +66,8 @@ define("CUSTOMEREDIT_ARRAY",serialize(array(
 											  "Charges History"=>"accounts/customer_charges/",
 											  "CDRs"=>"accounts/customer_cdrs/",
 											  "Emails"=>"accounts/customer_emailhistory/",
-											  "Alert Threshold"=>"accounts/customer_alert_threshold/"
+											  "Alert Threshold"=>"accounts/customer_alert_threshold/",
+												"Products"=>"accounts/customer_products/"
 											 )
 							  ));
 

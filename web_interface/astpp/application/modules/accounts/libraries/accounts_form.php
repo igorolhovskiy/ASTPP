@@ -699,6 +699,75 @@ else{
         return $buttons_json;
     }
 
+	function getRentTable($uid)
+	{
+		$account_info = $this->CI->session->userdata('accountinfo');
+
+		$gridTable = json_encode(array(
+			array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "30", "", "","","","","false","center"),
+			array(gettext("ID"), "50", "id", "", "", "","","true","center"),
+			array(gettext("Start Rent"), "200", "rent_create_at", "", "", "","","true","center"),
+			array(gettext("Product Name"), "190", "name", "", "", "","","true","center"),
+			array(gettext("Product Description"), "200", "description", "", "", "","","true","left"),
+			array(gettext("Price"), "70", "price", "", "", "","","true","center"),
+			array(gettext("Payment Type"), "100", "payment_type_name", "", "", "","","true","center"),
+			array(gettext("Count"), "50", "count", "", "", "","","true","center"),
+			array(gettext("Times"), "120", "leftpayments", "", "", "","","true","center"),
+
+			array("Action", "100", "", "", "", array(
+				/*"CALLERID" => array("url" => "#", "mode" => "popup"),*/
+				// "EDIT" => array("url" => "accounts/customer_products/{$uid}/?delete=", "mode" => "single"),
+				"DELETE" => array("url" => "accounts/customer_products/{$uid}/?delete=", "mode" => "single"))
+			)
+		));
+
+		return $gridTable;
+	}
+
+	function getRentActiveButtons($id)
+	{
+		$logintype = $this->CI->session->userdata('userlevel_logintype');
+		if($logintype != -1 && $logintype != 2) return json_encode(array());
+		$buttons = json_encode(array(
+			array(gettext("Add"), "btn btn-line-warning btn", "fa fa-plus-circle fa-lg", "button_action", "accounts/customer_products/{$id}/?create=new"),
+			array(gettext("Delete"), "btn btn-line-danger", "fa fa-times-circle fa-lg", "button_action", "accounts/customer_products/{$id}/?delete_change=true")
+		));
+		return $buttons;
+	}
+
+	function getRentForm($data = FALSE)
+	{
+		$form = array();
+
+		$id = NULL;
+		$name = NULL;
+		$description = NULL;
+		$price = NULL;
+		$uid = NULL;
+
+		if($data) extract($data);
+
+		$form["forms"] = array(base_url() . "accounts/customer_products/{$uid}/?save=true", array("id" => "product_from", "name" => "product_from", "method" => "POST"));
+
+		$form["Add Product"] = array(
+			array("", 'HIDDEN', array('name' => 'id', 'id' => 'id', 'value' => '', 'size' => '200', 'maxlength' => '255', 'class' => "text field medium"), '', 'tOOL TIP', ''),
+			array(gettext('Product'), 'id', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'name, delete_at', 'products', 'build_dropdown', 'where_arr', 'delete_at IS NULL'),
+			array(gettext('Count'), 'INPUT', array('name' => 'count', 'id' => 'count', 'value' => "1", 'size' => '200', 'maxlength' => '255', 'class' => "text field medium"), '', 'tOOL TIP', ''),
+			array(gettext('Payment type'), 'payment_type', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'name', 'rent_products_types', 'build_dropdown', 'where_arr', ''),
+			array(gettext('Times'), 'INPUT', array('name' => 'leftpayments', 'id' => 'leftpayments', 'value' => "0", 'size' => '50', 'maxlength' => '255', 'type' => 'number', 'min' => 0, 'style' => 'width:100px !important;', 'class' => "text field medium"), '', 'tOOL TIP', ''),
+		);
+
+		$form['button_cancel'] = array('name' => 'action', 'content' => gettext('Cancel'), 'value' => 'cancel', 'type' => 'button', 'class' => 'btn btn-line-sky margin-x-10', 'onclick' => 'return redirect_page(\'accounts/customer_products/' . $uid . '/\')');
+		$form['button_save'] = array('name' => 'action', 'content' => gettext('Save'), 'value' => 'save', 'type' => 'submit', 'class' => 'btn btn-line-parrot');
+
+		return $form;
+	}
+
+	function gridProductForm($data = FALSE)
+	{
+
+	}
+
 }
 
 ?>
