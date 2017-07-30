@@ -17,8 +17,8 @@ class products_grids
 
         $grid_field_arr = json_encode(array(
             array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "30", "", "", "", "", "", "false","center"),
-            array(gettext("Id"), "30", "id", "", "", "", "EDITABLE", "true", "left"),
-            array(gettext("Name"), "100", "name", "", "", "","","true","center"),
+            // array(gettext("Id"), "30", "id", "", "", "", "EDITABLE", "true", "left"),
+            array(gettext("Name"), "130", "name", "", "", "","","true","center"),
             array(gettext("Description"), "500", "description", "", "", "","","true","left"),
             array(gettext("Price"), "100", "price", "", "", "","","true","center"),
             array(gettext("Create At"), "100", "create_at", "", "", "", "true", "center"),
