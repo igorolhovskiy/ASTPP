@@ -178,6 +178,9 @@ class GenerateInvoice extends MX_Controller {
                 $this->db->insert("invoice_details", $tempArr);
             }
         }
+
+        $this->calc_products($account, $start_date, $end_date);
+
         $inv_data_query = "select count(id) as count,sum(debit) as debit,sum(credit) as credit from invoice_details where accountid=".$account['id']." AND created_date >='".$start_date."' AND created_date <= '".$end_date."'  AND invoiceid=0 AND item_type != 'FREECALL'";
 //echo $inv_data_query;         
         $invoice_data = $this->db->query($inv_data_query);
@@ -192,6 +195,72 @@ class GenerateInvoice extends MX_Controller {
             }
         }
         return "0";
+    }
+
+    // Calculate product for account
+    function calc_products($account, $start_date, $end_date) {
+		$this->db->select('products.price');
+		$this->db->select('products.name');
+		$this->db->select('rent.count');
+		$this->db->select('rent.payments');
+		$this->db->select('rent.leftpayments');
+		$this->db->select('rent.payment_type');
+		$this->db->select('rent.id');
+		$this->db->from('rent_products as rent');
+		$this->db->join('products', 'products.id = rent.product_id', 'left');
+		$this->db->where('rent.delete_at IS NULL');
+		$this->db->where('products.delete_at IS NULL');
+		$this->db->where('rent.user_id', $account['id']);
+//		$this->db->where("DATE(rent.last_payment) <=", date('Y-m-d', strtotime('- 1 month')));
+
+		$product_data = $this->db->get();
+
+		$product_data = $product_data->result_array();
+		if ($product_data) {
+			foreach ($product_data as $product) {
+
+				$update = array(
+					'last_payment' => date('Y-m-d H:i:s'),
+					'payments' => $product['payments'] + 1
+				);
+
+				if ($product['payment_type'] == 2) {
+					if ($product['leftpayments']) {
+						$update['leftpayments'] = $product['leftpayments'] - 1;
+
+						if ($update['leftpayments'] == 0) {
+							$this->db->where('id', $product['id']);
+							$this->db->update('rent_products', array(
+								'delete_at' => date('Y-m-d H:i:s')
+							));
+						}
+					}
+				}
+
+				$this->db->where('id', $product['id']);
+				$this->db->update("rent_products", $update);
+
+				$formatted_start_date = date('Y-m-d', strtotime($start_date));
+				$formatted_end_date = date('Y-m-d', strtotime($end_date));
+
+				$this->db->insert("invoice_details", array(
+					"accountid" => $account['id'],
+					"reseller_id" => $account['reseller_id'],
+					"item_id" => "0",
+					"description" => "{$product['name']} Service Payment for the period ({$formatted_start_date} to {$formatted_end_date}) x {$product['count']}",
+					"debit" => round($product['price'], self::$global_config['system_config']['decimal_points']) * $product['count'],
+					"item_type" => "PRODUCT",
+					"created_date" => $end_date
+				));
+
+				if ($product['payment_type'] == 1) {
+					$this->db->where('id', $product['id']);
+					$this->db->update('rent_products', array(
+						'delete_at' => date('Y-m-d H:i:s')
+					));
+				}
+			}
+		}
     }
 
     //Change Order of arguements
