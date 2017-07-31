@@ -705,7 +705,7 @@ else{
 
 		$gridTable = json_encode(array(
 			array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "30", "", "","","","","false","center"),
-			array(gettext("ID"), "50", "id", "", "", "","","true","center"),
+			// array(gettext("ID"), "50", "id", "", "", "","","true","center"),
 			array(gettext("Start Rent"), "200", "rent_create_at", "", "", "","","true","center"),
 			array(gettext("Product Name"), "190", "name", "", "", "","","true","center"),
 			array(gettext("Product Description"), "200", "description", "", "", "","","true","left"),

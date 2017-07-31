@@ -54,8 +54,26 @@
 <div id="main-wrapper" class="tabcontents">
     <div id="content">   
         <div class="row"> 
-            <div class="col-md-12 no-padding color-three border_box"> 
-				
+            <div class="col-md-12 no-padding color-three border_box">
+                <div class="pull-left">
+                    <ul class="breadcrumb">
+                        <li><a href="<?= base_url()."accounts/".strtolower($accounttype)."_list/"; ?>"><?= ucfirst($accounttype); ?>s </a></li>
+                        <li>
+                            <a href="<?= base_url()."accounts/".strtolower($accounttype)."_edit/".$user_id."/"; ?>"> Profile </a>
+                        </li>
+                        <li class="active">
+                            <a href="<?= base_url()."accounts/".strtolower($accounttype)."_products/".$user_id."/"; ?>">
+                                Products
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="pull-right">
+                    <ul class="breadcrumb">
+                        <li class="active pull-right">
+                            <a href="<?= base_url()."accounts/".strtolower($accounttype)."_edit/".$user_id."/"; ?>"> <i class="fa fa-fast-backward" aria-hidden="true"></i> Back</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="padding-15 col-md-12">
                 <div class="col-md-12 no-padding">

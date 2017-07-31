@@ -35,8 +35,8 @@
 <div id="main-wrapper" class="tabcontents">  
     <div id="content">   
         <div class="row"> 
-            <div class="col-md-12 no-padding color-three border_box"> 
-				
+            <div class="col-md-12 no-padding color-three border_box">
+
             </div>
             <div class="padding-15 col-md-12">
                 <div class="slice color-three pull-left content_border">

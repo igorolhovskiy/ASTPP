@@ -2542,6 +2542,7 @@ function reseller_invoice_config($id=''){
 			$data['grid_fields'] = $this->accounts_form->getRentTable($id);
 			$data['grid_buttons'] = $this->accounts_form->getRentActiveButtons($id);
 			$data['user_id'] = $id;
+			$data['accounttype'] = $accounttype;
 			$this->load->view('view_customer_rent', $data);
 		} else {
 			redirect(base_url() . 'accounts/customer_list/');
