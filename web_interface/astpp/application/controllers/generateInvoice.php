@@ -247,7 +247,7 @@ class GenerateInvoice extends MX_Controller {
 					"accountid" => $account['id'],
 					"reseller_id" => $account['reseller_id'],
 					"item_id" => "0",
-					"description" => "{$product['name']} Service Payment for the period ({$formatted_start_date} to {$formatted_end_date}) x {$product['count']}",
+					"description" => "{$product['name']} x {$product['count']}",
 					"debit" => round($product['price'], self::$global_config['system_config']['decimal_points']) * $product['count'],
 					"item_type" => "PRODUCT",
 					"created_date" => $end_date
