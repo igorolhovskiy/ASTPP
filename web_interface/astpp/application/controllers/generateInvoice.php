@@ -168,7 +168,7 @@ class GenerateInvoice extends MX_Controller {
             //echo '<pre>'; print_r($cdr_data); exit;
             foreach ($cdr_data as $cdrvalue) {
                 $cdrvalue['debit'] = round($cdrvalue['debit'], self::$global_config['system_config']['decimalpoints']);
-                if ($cdrvalue['calltype'] === 'STANDARD') {
+                if ($cdrvalue['calltype'] === 'STANDARD' || $cdrvalue['calltype'] === 'PACKAGE+') {
                     $description = 'Gesprächsgebühren '.$start_date." - ".$end_date;
                 } else {
                     $description = $cdrvalue['calltype']." CALLS for the period (".$start_date." to ".$end_date.")";
