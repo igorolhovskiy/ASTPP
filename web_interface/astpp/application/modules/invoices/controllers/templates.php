@@ -206,11 +206,13 @@ class Templates extends MX_Controller {
 
         /*** manual invoice **/
         $this->db->where('item_type <>', 'INVPAY');
-        $invoice_details = $this->db_model->getSelect('*', 'invoice_details', array(
-            "invoiceid" => $invoicedata['id'],
-            'item_type <>' => 'TAX',
+
+        $invoice_details = $this->db_model->select('id, accountid, reseller_id, invoiceid, item_id, item_type, '.
+			'description, sum(debit) as debit, sum(credit) as credit, created_date', 'invoice_details', array(
+			"invoiceid" => $invoicedata['id'],
+			'item_type <>' => 'TAX',
 			'debit <> ' => '0'
-        ));
+		), null, null, '', '', 'description');
         $invoice_details = $invoice_details->result_array();
         $total_sum       = 0;
         foreach ($invoice_details as &$charge_res) {
