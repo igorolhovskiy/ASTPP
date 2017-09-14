@@ -274,6 +274,7 @@ class Templates extends MX_Controller {
                     $value['total_seconds'] = $this->common->convert_sec_to_minsec($value['total_seconds']);
                     $value['total_debit'] = $this->common->currency_decimal($value['total_debit']);
                     $value['num'] = $i;
+                    $value['count'] = round($value['total_seconds']/60,0);
                     $i++;
                 }
 
@@ -285,7 +286,8 @@ class Templates extends MX_Controller {
                             'total_seconds' => $this->common->convert_sec_to_minsec($without_group_secs),
                             'group_calls_name' => _('No zone'),
                             'total_debit' => $this->common->currency_decimal($without_group_amount),
-                            'num' => $i
+                            'num' => $i,
+							'count' => round($value['total_seconds']/60,0)
                         );
                     }
                 }
@@ -293,6 +295,20 @@ class Templates extends MX_Controller {
             }
 
         }
+
+        //group calls with products detail
+		$template_data['group_calls_with_products'] = $group_calls;
+        $i = count($group_calls);
+        foreach ($invoice_details as $data) {
+        	if ($data['item_type'] === 'Product Invoice') {
+				$template_data['group_calls_with_products'][] = array(
+					'group_calls_name' => $data['description'],
+					'total_debit' => $data['debit'],
+					'num' => ++$i,
+					'count' => 1
+				);
+			}
+		}
 
         $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $invoicedata['from_date'], $invoicedata['to_date']);
         $i = 1;
@@ -304,6 +320,11 @@ class Templates extends MX_Controller {
 		}
 		$template_data['destination_group_calls'] = $destination_group_calls;
 		unset($group_row);
+
+		$dids = $this->db_model->getSelect("group_concat(number SEPARATOR '<br>') as numbers", 'dids', array(
+			"accountid" => $invoicedata['accountid']
+		));
+		$template_data['dids'] = $dids->row_array()['numbers'];
 
         // Try to add user custom variables
         $vars_query = $this->db_model->getSelect("*", "invoice_template_vars",'');

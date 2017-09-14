@@ -14,7 +14,7 @@ tinymce.init({
   theme: 'modern',
   plugins: [
     'advlist autolink lists link image charmap print preview hr anchor pagebreak',
-    'searchreplace wordcount visualblocks visualchars code fullscreen',
+    'searchreplace wordcount visualblocks visualchars code',
     'insertdatetime media nonbreaking save table contextmenu directionality',
     'emoticons template paste textcolor colorpicker textpattern imagetools'
   ],
@@ -45,7 +45,7 @@ function preview_pdf() {
     dataType: 'json',
     success: function (response) {
       if (response && response.success) {
-        window.open("data:application/pdf;base64, " + response.contentPdf);
+        window.open("data:application/pdf;base64," + response.contentPdf, 'previewpdf');
       } else {
         alert('Failed forming pdf. ' + response.message);
       }
