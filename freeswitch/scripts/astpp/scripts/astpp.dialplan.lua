@@ -407,7 +407,7 @@ if (userinfo ~= nil) then
                     xml = freeswitch_xml_callerid(xml,calleridinfo)               
                 else
                     if (callerid_consertis ~= nil) then
-                        callerid_outbound, callerid_billing = get_callerid_consertis()
+                        callerid_outbound, callerid_billing = callerid_consertis
                         calleridinfo = {}
                         calleridinfo['cid_name'] = callerid_outbound
                         calleridinfo['cid_number'] = callerid_outbound
