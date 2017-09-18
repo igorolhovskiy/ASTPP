@@ -1729,7 +1729,7 @@ class common {
     function currency_decimal($amount) {
 		$amount = str_replace(',', '', $amount);
         $decimal_amount = Common_model::$global_config['system_config']['decimalpoints'];
-        $number_convert = number_format((float)$amount, $decimal_amount, '.', '');
+        $number_convert = number_format((float)$amount, $decimal_amount, ',', '.');
         return $number_convert;
     }
 

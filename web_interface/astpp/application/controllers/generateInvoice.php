@@ -159,7 +159,7 @@ class GenerateInvoice extends MX_Controller {
     function count_invoice_data($account, $start_date = "", $end_date = "") {
         $cdr_query = "";
         $inv_data_query = "";
-        $cdr_query = "select calltype,sum(debit) as debit from cdrs where accountid = ".$account['id'];
+        $cdr_query = "select calltype,sum(debit) as debit, sum(billseconds) as billseconds from cdrs where accountid = ".$account['id'];
         $cdr_query .= " AND callstart >='".$start_date."' AND callstart <= '".$end_date."' AND invoiceid=0 group by calltype";
 //echo $cdr_query; 
         $cdr_data = $this->db->query($cdr_query);
@@ -174,7 +174,7 @@ class GenerateInvoice extends MX_Controller {
                     $description = $cdrvalue['calltype']." CALLS for the period (".$start_date." to ".$end_date.")";
                 }
                 $tempArr = array("accountid" => $account['id'], "reseller_id" => $account['reseller_id'], "item_id" => "0",
-                    "description" => $description, "debit" => $cdrvalue['debit'], "item_type" => $cdrvalue['calltype'], "created_date" => $end_date);
+                    "description" => $description, "debit" => $cdrvalue['debit'], "count" => $cdrvalue['billseconds'], "item_type" => $cdrvalue['calltype'], "created_date" => $end_date);
                 $this->db->insert("invoice_details", $tempArr);
             }
         }
@@ -247,9 +247,10 @@ class GenerateInvoice extends MX_Controller {
 					"accountid" => $account['id'],
 					"reseller_id" => $account['reseller_id'],
 					"item_id" => "0",
-					"description" => "{$product['name']} x {$product['count']}",
+					"description" => "{$product['name']}",
 					"debit" => round($product['price'], self::$global_config['system_config']['decimal_points']) * $product['count'],
 					"item_type" => "PRODUCT",
+					"count" => $product['count'],
 					"created_date" => $end_date
 				));
 

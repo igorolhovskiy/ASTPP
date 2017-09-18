@@ -208,7 +208,7 @@ class Templates extends MX_Controller {
         $this->db->where('item_type <>', 'INVPAY');
 
         $invoice_details = $this->db_model->select('id, accountid, reseller_id, invoiceid, item_id, item_type, '.
-			'description, sum(debit) as debit, sum(credit) as credit, created_date', 'invoice_details', array(
+			'description, sum(debit) as debit, sum(credit) as credit, sum(count) as count, created_date', 'invoice_details', array(
 			"invoiceid" => $invoicedata['id'],
 			'item_type <>' => 'TAX',
 			'debit <> ' => '0'
@@ -305,7 +305,7 @@ class Templates extends MX_Controller {
 					'group_calls_name' => $data['description'],
 					'total_debit' => $data['debit'],
 					'num' => ++$i,
-					'count' => 1
+					'count' => $data['count']
 				);
 			}
 		}
