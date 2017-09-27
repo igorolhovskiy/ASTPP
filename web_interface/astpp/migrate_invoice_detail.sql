@@ -1,1 +1,0 @@
-alter TABLE invoice_details ADD COLUMN count int DEFAULT 0;
