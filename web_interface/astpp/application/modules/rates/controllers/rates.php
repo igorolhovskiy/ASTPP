@@ -416,7 +416,8 @@ Batch Delete
 				$edit_data = $value;
 			}
 			$edit_data['connectcost'] = $this->common_model->to_calculate_currency($edit_data['connectcost'], '', '', true, false);
-			$edit_data['cost'] = $this->common_model->to_calculate_currency($edit_data['cost'], '', '',true, false);
+			//$edit_data['cost'] = $this->common_model->to_calculate_currency($edit_data['cost'], '', '',true, false);
+			$edit_data['cost'] = $this->common_model->to_calculate_currency($edit_data['cost'], '', '',false, false);
 			$edit_data['pattern'] = filter_var($edit_data['pattern'], FILTER_SANITIZE_NUMBER_INT);
 
 			$data['form'] = $this->form->build_form($this->rates_form->get_origination_rate_form_fields(), $edit_data);
@@ -519,7 +520,7 @@ Batch Delete
 		$count_all = $this->rates_model->get_origination_rate_list(false);
 		$paging_data = $this->form->load_grid_config($count_all, $_GET['rp'], $_GET['page']);
 		$json_data = $paging_data["json_paging"];
-//echo "<pre>"; print_r($json_data); 
+// echo "<pre>"; print_r($json_data);
 		$query = $this->rates_model->get_origination_rate_list(true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
 		$grid_fields = json_decode($this->rates_form->build_origination_rate_list_for_admin());
 		$json_data['rows'] = $this->form->build_grid($query, $grid_fields);
