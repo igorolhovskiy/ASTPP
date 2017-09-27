@@ -282,7 +282,8 @@ For Termination Rate edit on Code
 			array("Destination", "80", "comment", "", "", "","","true","center"),
 			array("Connect Cost($currency)", "125", "connectcost", "connectcost", "connectcost", "convert_to_currency","","true","right"),
 			array("Included<br/> Seconds", "70", "includedseconds", "", "", "","","true","center"),
-			array("Per Minute <br/>Cost($currency)", "100", "cost", "cost", "cost", "convert_to_currency","","true","right"),
+			// array("Per Minute <br/>Cost($currency)", "100", "cost", "cost", "cost", "convert_to_currency","","true","right"),
+			array("Per Minute <br/>Cost($currency)", "100", "cost", "", "", "","","true","right"),
   		array("Initial <br/> Increment", "95", "init_inc", "", "", "","","true","center"),
 			array("Increment", "75", "inc", "", "", "","","true","center"),
 			array("Priority", "70", "precedence", "", "", "","","true","center"),
@@ -331,7 +332,9 @@ For Origination rate edit on code
 			array("Destination", "100", "comment", "", "", "","","true","center"),
 			array("Connect Cost($currency)", "130", "connectcost", "connectcost", "connectcost", "convert_to_currency","","true","right"),
 			array("Included Seconds", "120", "includedseconds", "", "", "","","true","center"),
-			array("Per Minute Cost($currency)", "150", "cost", "cost", "cost", "convert_to_currency","","true","right"),
+//			array("Per Minute Cost($currency)", "150", "cost", "cost", "cost", "convert_to_currency","","true","right"),
+			array("Per Minute Cost($currency)", "150", "cost", "", "", "","","true","right"),
+
 /**
 ASTPP  3.0 
 For Add Initial Increment field
