@@ -214,7 +214,7 @@ class Templates extends MX_Controller {
 			'debit <> ' => '0'
 		), null, null, '', '', 'description');
         $invoice_details = $invoice_details->result_array();
-        $total_sum       = 0;
+        $total_sum       = 0.00;
         foreach ($invoice_details as &$charge_res) {
             if ($charge_res['item_type'] == 'DIDCHRG' || $charge_res['item_type'] == 'SUBCHRG' || $charge_res['item_type'] == 'manual_inv' || $charge_res['item_type'] == 'PRODUCT') {
                 if ($charge_res['item_type'] == 'PRODUCT') {
@@ -230,14 +230,14 @@ class Templates extends MX_Controller {
                     $charge_res['item_type'] = 'Subscription Charge';
                 }
             }
-            $charge_res['debit'] = $this->common->currency_decimal($this->common_model->calculate_currency($charge_res['debit']));
-            $total_sum += $charge_res['debit'];
+            $debit_conv = $this->common_model->calculate_currency($charge_res['debit'], '', '', true, false);
+            $charge_res['debit'] = $this->common->currency_decimal($debit_conv);
+            $total_sum += $debit_conv;
         }
         unset($charge_res);
-        $total_sum   = $this->common->currency_decimal($this->common_model->calculate_currency($total_sum));
 
         $template_data['invoice_details'] = $invoice_details;
-        $template_data['total_sum'] = $total_sum;
+        $template_data['total_sum'] = $this->common->currency_decimal($this->common_model->calculate_currency($total_sum));
 
         $invoice_tax = $this->db_model->getSelect('*', 'invoice_details', array(
             "invoiceid" => $invoicedata['id'],
@@ -246,15 +246,15 @@ class Templates extends MX_Controller {
         $invoice_tax = $invoice_tax->result_array();
         $total_vat = 0;
         foreach ($invoice_tax as &$charge_res) {
+			$debit_conv = $this->common_model->calculate_currency($charge_res['debit'], '', '', true, false);
             $total_vat += $charge_res['debit'];
-            $charge_res['total_vat'] = $this->common->currency_decimal($this->common_model->calculate_currency($total_vat));
+            $charge_res['total_vat'] = $this->common->currency_decimal($debit_conv);
         }
         unset($charge_res);
 
-        $total_vat = $this->common->currency_decimal($this->common_model->calculate_currency($total_vat));
         $sub_total = $total_sum + $total_vat;
         $template_data['invoice_details_tax'] = $invoice_tax;
-        $template_data['total_vat'] = $total_vat;
+        $template_data['total_vat'] = $this->common->currency_decimal($this->common_model->calculate_currency($total_vat));
         $template_data['sub_total'] = $this->common->currency_decimal($sub_total);
 
         $sec_from_date = (int) strtotime($from_date);
