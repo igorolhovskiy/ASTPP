@@ -47,11 +47,13 @@ class GenerateInvoice extends MX_Controller {
     }
 
     function getInvoiceData() {
+		log_message('error','GENERATE INVOICE: Starting');
         $where = array("posttoexternal" => 1, "deleted" => "0", "status" => "0");
         $query = $this->db_model->getSelect("*", "accounts", $where);
         if ($query->num_rows > 0) {
             $account_data = $query->result_array();
             foreach ($account_data as $data_key => $account_value) {
+				log_message('error','GENERATE INVOICE: '.'Processing row: '.json_encode($account_value));
                 $end_date = gmdate("Y-m-d")." 23:59:59";
                 $account_value['sweep_id'] = (int)$account_value['sweep_id'];
                 switch ($account_value['sweep_id']) {
@@ -62,7 +64,9 @@ class GenerateInvoice extends MX_Controller {
                         }
                         $end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 days"));
                         $yesterday = gmdate("Y-m-d 23:59:59", strtotime(gmdate("Y-m-d H:i:s")." - 1 days"));
+						log_message('error','GENERATE INVOICE: '."start_date = $start_date, end_date = $end_date, yesterday = $yesterday");
                         if (strtotime($end_date) <= strtotime($yesterday)) {
+							log_message('error','GENERATE INVOICE: '.'go to Generate_Daily_invoice');
 							$this->Generate_Daily_invoice($account_value, $start_date, $end_date);
 						}
                         break;
@@ -75,6 +79,8 @@ class GenerateInvoice extends MX_Controller {
                             //$end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 month"));
                             // set end date to day before generate invoice
                             $end_date = gmdate("Y-m-d 23:59:59", strtotime(gmdate("Y-m-d H:i:s")." - 1 days"));
+							log_message('error','GENERATE INVOICE: '."start_date = $start_date, end_date = $end_date");
+							log_message('error','GENERATE INVOICE: '.'go to Generate_Monthly_invoice');
                             $this->Generate_Monthly_invoice($account_value, $start_date, $end_date);
                         }
                         break;

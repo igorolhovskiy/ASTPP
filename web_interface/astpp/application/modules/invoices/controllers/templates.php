@@ -170,8 +170,7 @@ class Templates extends MX_Controller {
             'accountid' => $login_info['id']
         ));
         $invoice_config = $invoice_config->result_array();
-        $invoice_config_res = $invoice_config[0];
-        $template_data['invoice_conf'] = $invoice_config_res;
+        $template_data['invoice_conf'] = count($invoice_config) > 0 ? $invoice_config[0] : null;
 
         $accountdata["currency_id"] = $this->common->get_field_name('currency', 'currency', $accountdata["currency_id"]);
         $accountdata["country"]     = $this->common->get_field_name('country', 'countrycode', $accountdata["country_id"]);
@@ -308,7 +307,6 @@ class Templates extends MX_Controller {
 		}
 		$template_data['destination_group_calls'] = $destination_group_calls;
 		unset($group_row);
-
 		//group calls with products detail
 		$template_data['group_calls_with_products'] = $destination_group_calls;
 		$i = count($group_calls);
