@@ -296,11 +296,24 @@ class Templates extends MX_Controller {
 
         }
 
-        //group calls with products detail
-		$template_data['group_calls_with_products'] = $group_calls;
-        $i = count($group_calls);
-        foreach ($invoice_details as $data) {
-        	if ($data['item_type'] === 'Product Invoice') {
+        $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $invoicedata['from_date'], $invoicedata['to_date']);
+        $i = 1;
+        foreach ($destination_group_calls as &$group_row) {
+        	$group_row['group_calls_name'] = $group_row['destination'];
+			$group_row['count' ] = round($group_row['total_seconds']/60,0);
+			$group_row['total_seconds'] = $this->common->convert_sec_to_minsec($group_row['total_seconds']);
+			$group_row['total_debit'] = $this->common->currency_decimal($group_row['total_debit']);
+			$group_row['num'] = $i;
+			$i++;
+		}
+		$template_data['destination_group_calls'] = $destination_group_calls;
+		unset($group_row);
+
+		//group calls with products detail
+		$template_data['group_calls_with_products'] = $destination_group_calls;
+		$i = count($group_calls);
+		foreach ($invoice_details as $data) {
+			if ($data['item_type'] === 'Product Invoice') {
 				$template_data['group_calls_with_products'][] = array(
 					'group_calls_name' => $data['description'],
 					'total_debit' => $data['debit'],
@@ -309,17 +322,6 @@ class Templates extends MX_Controller {
 				);
 			}
 		}
-
-        $destination_group_calls = $this->templates_model->get_destination_group_calls_cdrs($accountdata['id'], $invoicedata['from_date'], $invoicedata['to_date']);
-        $i = 1;
-        foreach ($destination_group_calls as &$group_row) {
-			$group_row['total_seconds'] = $this->common->convert_sec_to_minsec($group_row['total_seconds']);
-			$group_row['total_debit'] = $this->common->currency_decimal($group_row['total_debit']);
-			$group_row['num'] = $i;
-			$i++;
-		}
-		$template_data['destination_group_calls'] = $destination_group_calls;
-		unset($group_row);
 
 		$dids = $this->db_model->getSelect("group_concat(number SEPARATOR '<br>') as numbers", 'dids', array(
 			"accountid" => $invoicedata['accountid']
