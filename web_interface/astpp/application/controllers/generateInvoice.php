@@ -62,7 +62,7 @@ class GenerateInvoice extends MX_Controller {
                         if (strtotime($start_date) >= strtotime(gmdate("Y-m-d H:i:s"))) {
                             $start_date = gmdate("Y-m-d H:i:s");
                         }
-                        $end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date." + 1 days"));
+                        $end_date = gmdate("Y-m-d 23:59:59", strtotime($start_date));
                         $yesterday = gmdate("Y-m-d 23:59:59", strtotime(gmdate("Y-m-d H:i:s")." - 1 days"));
 						log_message('error','GENERATE INVOICE: '."start_date = $start_date, end_date = $end_date, yesterday = $yesterday");
                         if (strtotime($end_date) <= strtotime($yesterday)) {
