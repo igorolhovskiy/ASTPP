@@ -277,7 +277,7 @@ function get_call_maxlength(userinfo,destination_number,call_direction,number_lo
     local tmp = {}
     
     if (package_maxlength ~= "") then
-        maxlength = tonumber(package_maxlength)
+        maxlength = tonumber(package_maxlength) or 0
     end
 
     rate_group = get_pricelists(userinfo,destination_number,number_loop,call_direction)
