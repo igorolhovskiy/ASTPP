@@ -149,13 +149,14 @@ For DID edit on DID number
 			array(gettext("Initial <br>Increment"), "80", "init_inc", "", "", "","","true","center"),
 			array(gettext("Increment"), "90", "inc", "", "", "","","true","center"),
 			array("Setup <br>Fee($currency)", "70", "setup", "setup", "setup", "convert_to_currency","","true","right"),
-			array("Monthly<br>Fee($currency)", "90", "monthlycost", "monthlycost", "monthlycost", "convert_to_currency","","true","right"),
-			array(gettext("Call Type"), "90", "call_type", "call_type", "call_type", "get_call_type","","true","center"),
+			array("Monthly<br>Fee($currency)", "70", "monthlycost", "monthlycost", "monthlycost", "convert_to_currency","","true","right"),
+			array(gettext("Call Type"), "70", "call_type", "call_type", "call_type", "get_call_type","","true","center"),
 			array(gettext("Destination"), "80", "extensions", "", "", "","","true","center"),       
 			array(gettext("Status"), "90", "status", "status", "dids", "get_status","","true","center"),
 			array(gettext("Modified <br/>Date"), "90", "last_modified_date", "last_modified_date", "last_modified_date", "convert_GMT_to","","true","center"),
-			array(gettext("Is Purchased?"), "110", "number", "number", "number", "check_did_avl","","true","center"),
-			array("Action", "100", "", "", "", array("EDIT" => array("url" => "did/did_edit/", "mode" => "popup","layout"=>"medium"),
+			array(gettext("Is Purchased?"), "90", "number", "number", "number", "check_did_avl","","true","center"),
+			array(gettext("Is Ported"), "90", "status", "is_ported", "dids", "get_ported","","true","center"),
+			array("Action", "90", "", "", "", array("EDIT" => array("url" => "did/did_edit/", "mode" => "popup","layout"=>"medium"),
 					"DELETE" => array("url" => "did/did_remove/", "mode" => "single")))
 			));
 		return $grid_field_arr;

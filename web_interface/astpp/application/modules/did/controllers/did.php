@@ -847,6 +847,14 @@ class DID extends MX_Controller {
 		array_to_csv($outbound_array, 'DIDs_' . date("Y-m-d") . '.csv');
 	}
 
+	function did_ported($id){
+		$post_data = $this->input->post();
+		$post_data['table']=$this->common->decode($post_data['table']);
+		$data['is_ported']=$post_data['is_ported'] =='true'? 1 : 0;
+		$result=$this->db->update($post_data['table'], $data, array("id"=>$post_data['id']));
+		echo $result;
+	}
+
 }
 ?>
  

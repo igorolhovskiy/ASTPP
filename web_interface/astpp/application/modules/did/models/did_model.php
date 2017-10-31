@@ -131,7 +131,7 @@ class DID_model extends CI_Model {
 		  /*
 	      ASTPP  3.0  last_modified_date,assign_date put in query.
 	      */
-		$this->db->select('dids.id,dids.connectcost,dids.includedseconds,dids.last_modified_date,dids.assign_date,dids.number,dids.extensions,dids.call_type,dids.country_id,dids.init_inc,dids.inc,dids.cost,dids.setup,dids.monthlycost,dids.status,(CASE when parent_id > 0 THEN (SELECT reseller_id as accountid from reseller_pricing where dids.number=reseller_pricing.note AND reseller_pricing.parent_id=0) ELSE dids.accountid END ) as accountid');
+		$this->db->select('dids.id,dids.connectcost,dids.includedseconds,dids.last_modified_date,dids.assign_date,dids.number,dids.extensions,dids.call_type,dids.country_id,dids.init_inc,dids.inc,dids.cost,dids.setup,dids.monthlycost, dids.status, dids.is_ported, (CASE when parent_id > 0 THEN (SELECT reseller_id as accountid from reseller_pricing where dids.number=reseller_pricing.note AND reseller_pricing.parent_id=0) ELSE dids.accountid END ) as accountid');
 				if (isset($_GET['sortname']) && $_GET['sortname'] != 'undefined'){
 					$this->db->order_by($_GET['sortname'], ($_GET['sortorder']=='undefined')?'desc':$_GET['sortorder']);
 				}

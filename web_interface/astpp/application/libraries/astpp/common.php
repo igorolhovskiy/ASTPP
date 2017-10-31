@@ -498,6 +498,30 @@ class common {
 	}
 	return $status_array;
     }
+
+	/*
+	show ported on all grid
+	*/
+	function get_ported($select = "", $table = "", $status) {
+		if ($select != 'export') {
+			$status_tab = $this->encode($table);
+			$status['table'] = "'".$status_tab."'";
+			if ($status['is_ported'] == 1) {
+				$status_array = '<div style="width: 100%; text-align: -moz-center; padding: 0;"><input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id=switchPorted'.$status['id'].' value='.$status['is_ported'].' onclick="javascript:processFormPorted('.$status['id'].','.$status['table'].')" checked>
+	<label class="onoffswitch-label" for=switchPorted'.$status["id"].'>
+     	<span class="onoffswitch-inner"></span>
+	</label></div>';
+			} else {
+				$status_array = '<div style="width: 100%; text-align: -moz-center; padding: 0;"><input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id=switchPorted'.$status['id'].' value='.$status['is_ported'].' onclick="javascript:processFormPorted('.$status['id'].','.$status['table'].')">
+	<label class="onoffswitch-label" for=switchPorted'.$status["id"].'>
+     	<span class="onoffswitch-inner"></span>
+	</label></div>';
+			}
+		} else {
+			return ($status == 1) ? "Active" : "Inactive";
+		}
+		return $status_array;
+	}
    
     function get_routetype($select = "", $table = "", $status) {
         return ($status == 0) ? "LCR" : "COST";
