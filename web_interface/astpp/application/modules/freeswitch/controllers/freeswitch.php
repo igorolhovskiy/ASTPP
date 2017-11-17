@@ -327,9 +327,13 @@ Customer side show voice mail detials
 	$path_true = base_url().'/assets/images/true.png';
 	$path_false = base_url().'/assets/images/false.png';
 	$voicemail_enabled = $value['voicemail_enabled'] == 'true'? '<img src='.$path_true.' style="height:20px;width:20px;" title="Enable">' : '<img src='.$path_false.' style="height:20px;width:20px;" title="Disable">';
+
+	$status_sip_device = "";
+
 		$json_data['rows'][] = array('cell' => array(
 			'<input type="checkbox" name="chkAll" id="'.$value['id'].'" class="ace chkRefNos" onclick="clickchkbox('.$value['id'].')" value=' .$value['id'].'><lable class="lbl"></lable>',
-					$value['username'],
+					'<span class="state-sipdevice">'.$status_sip_device.'</span>',
+					'<span class="number-sipdevice">'.$value['username'].'</span>',
 					$value['password'],
 					$this->common->get_field_name('name', '`sip_profiles', array('id' => $value['sip_profile_id'])),
 					$value['effective_caller_id_name'],

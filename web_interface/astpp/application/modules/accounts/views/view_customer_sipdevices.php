@@ -15,7 +15,52 @@ $(document).ready(function() {
     $("#left_panel_quick_search").keyup(function(){
         quick_search("accounts/customer_details_search/"+'<?php echo $accounttype ?>'+"_sipdevices/");
     });
+
+    setTimeout(function updateState() {
+      updateStateDevice()
+        .then(function(){
+          setTimeout(updateState, 5000);
+        })
+        .catch(function(error){
+          console.log('error get status', error);
+          setTimeout(updateState, 5000)
+        });
+    }, 5000);
 });
+
+function updateStateDevice() {
+  var apiUrl = '<?php echo $state_api_point_url; ?>';
+  var iconRegistered = '<?php echo $icon_registered; ?>';
+  var iconUnregistered = '<?php echo $icon_unregistered; ?>';
+  var numbers = $('#sidevices_grid tr td .number-sipdevice');
+  var promises = [];
+  $.each(numbers, function(index, item) {
+    var num = $(item).html();
+    promises.push(
+      new Promise(function(resolve, reject) {
+        $.ajax({
+          url: apiUrl + num,
+          success: function(data) {
+            var result = JSON.parse(data);
+            if (result.success) {
+              if (result.state == 1) {
+                $(item).closest('tr').find('.state-sipdevice').html(iconRegistered);
+              } else {
+                $(item).closest('tr').find('.state-sipdevice').html(iconUnregistered);
+              }
+            }
+            resolve();
+          },
+          error: function(error) {
+            reject(error);
+          }
+        });
+      })
+    );
+  });
+  return Promise.all(promises);
+}
+
 </script>
 <? endblock() ?>
 <? startblock('page-title') ?>

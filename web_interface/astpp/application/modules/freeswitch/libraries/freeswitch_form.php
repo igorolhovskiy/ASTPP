@@ -453,17 +453,18 @@ For Sip Profile edit on Profile name
 	function build_devices_list_for_customer() {
 		$grid_field_arr = json_encode(array(
 			array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "30", "", "", "", "","","false","center"),
+			array("State", "50", "", "", "", "","","true","center"),
 			array("User Name", "100", "username", "", "", "","","true","center"),
 			array("Password", "100", "password", "", "", "","","true","center"),
 			array("SIP Profile", "90", "sip_profile_id", "name", "sip_profiles", "get_field_name","","true","center"),
 			array("Caller Name", "100", "effective_caller_id_name", "", "", "","","true","center"),
 			array("Caller Number", "100", "effective_caller_id_number", "", "", "","","true","center"),
-			array("Voicemail", "100", "voicemail_enabled", "", "", "","","true","center"),
+			array("Voicemail", "80", "voicemail_enabled", "", "", "","","true","center"),
 			//array("Call Waiting", "105", "call_waiting", "", "", ""),
-			array("Status", "100", "status", "", "", "","","true","center"),
+			array("Status", "90", "status", "", "", "","","true","center"),
 			array("Created Date", "100", "creation_date", "creation_date", "creation_date", "convert_GMT_to","","true","center"),
 			array("Modified Date", "100", "last_modified_date", "last_modified_date", "last_modified_date", "convert_GMT_to","","true","center"),
-			array("Action", "110", "", "", "", array("EDIT" => array("url" => "/accounts/fssipdevices_action/edit/", "mode" => "single"),
+			array("Action", "90", "", "", "", array("EDIT" => array("url" => "/accounts/fssipdevices_action/edit/", "mode" => "single"),
 					"DELETE" => array("url" => "/accounts/fssipdevices_action/delete/", "mode" => "single")))
 				));
 		return $grid_field_arr;
