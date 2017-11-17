@@ -38,6 +38,18 @@
             }
         });
     });
+    function processFormPorted(id,table) {
+      var url="<?php echo base_url(); ?>did/did_ported/"+id;
+      var status='false';
+      if($('#switchPorted'+id).attr('checked')){
+        status='true';
+      }
+      $.ajax({
+        type:"POST",
+        url:url,
+        data:{"is_ported":status,"id":id,"table":table},
+      });
+    }
 </script>
 <style>
     #err

@@ -210,10 +210,11 @@ For DID edit on DID number
 	array("Country", "110", "country_id", "country", "countrycode", "get_field_name","","true","center"),
 	array("Per Minute Cost($currency)", "150", "cost", "cost", "cost", "convert_to_currency","","true","right"),
 	array("Initial Increment", "140", "init_inc", "", "", "","","true","center"),
-	array("Increment", "120", "inc", "", "", "","","true","center"),
-	array("Setup Fee($currency)", "140", "setup", "setup", "setup", "convert_to_currency","","true","right"),
-	array("Monthly Fee($currency)", "140", "monthlycost", "monthlycost", "monthlycost", "convert_to_currency","","true","right"),
-	array("Action", "110", "", "", "", array("DELETE" => array("url" => "accounts/".$accounttype."_dids_action/delete/$accountid/$accounttype/", "mode" => "single")))
+	array("Increment", "100", "inc", "", "", "","","true","center"),
+	array("Setup Fee($currency)", "120", "setup", "setup", "setup", "convert_to_currency","","true","right"),
+	array("Monthly Fee($currency)", "120", "monthlycost", "monthlycost", "monthlycost", "convert_to_currency","","true","right"),
+	array("Action", "90", "", "", "", array("DELETE" => array("url" => "accounts/".$accounttype."_dids_action/delete/$accountid/$accounttype/", "mode" => "single"))),
+	array(gettext("Is Ported"), "90", "status", "is_ported", "dids", "get_ported","","true","center")
 		));
 		return $grid_field_arr;
 	}
