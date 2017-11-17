@@ -267,7 +267,7 @@ class Accounts extends MX_Controller {
 				unset($add_array['posttoexternal'],$add_array['number'],$add_array['balance']);
 				$this->accounts_model->edit_account($add_array, $add_array['id']);
 				$this->session->set_flashdata('astpp_errormsg', ucfirst($entity_name) . ' updated successfully!');
-				redirect(base_url() . 'accounts/customer_list/');
+				redirect(base_url() . 'accounts/customer_edit/' . $add_array['id']);
 				exit;
 			}
 			$data["account_data"]["0"] = $add_array;
