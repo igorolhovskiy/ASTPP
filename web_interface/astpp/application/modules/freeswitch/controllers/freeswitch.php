@@ -251,6 +251,10 @@ class Freeswitch extends MX_Controller {
 		$data['grid_fields'] = $this->freeswitch_form->build_system_list_for_admin();
 		$data["grid_buttons"] = $this->freeswitch_form->build_grid_buttons();
 		$data['form_search'] = $this->form->build_serach_form($this->freeswitch_form->get_sipdevice_search_form());
+		$data['state_api_point_url'] = base_url().'accounts/customer_state_sipdevice/';
+		$data['icon_registered'] = '<span class="fa-lg"><i class="fa fa-circle" aria-hidden="true" style="color:green;"></i> </span>';
+		$data['icon_unregistered'] = '<span class="fa-lg"><i class="fa fa-circle-o" aria-hidden="true"></i> </span>';
+
 		$this->load->view('view_freeswitch_sip_devices_list', $data);
 	}
 
@@ -274,7 +278,8 @@ Admin side show voicemail details
 	}
 		$json_data['rows'][] = array('cell' => array(
 			'<input type="checkbox" name="chkAll" id=' . $value['id'] . ' class="ace chkRefNos" onclick="clickchkbox(' . $value['id'] . ')" value=' . $value['id'] . '><lable class="lbl"></lable>',
-			"<a href='/freeswitch/fssipdevices_edit/".$value['id']."' style='cursor:pointer;color:#005298;' rel='facebox_medium' title='username'>".$value['username']."</a>",
+			"<span class='state-sipdevice'></span>",
+			"<a href='/freeswitch/fssipdevices_edit/".$value['id']."' style='cursor:pointer;color:#005298;' rel='facebox_medium' title='username'><span class='number-sipdevice'>".$value['username']."</span></a>",
 /**************************/
 					$value['password'],
 					$this->common->get_field_name('name', '`sip_profiles', array('id' => $value['sip_profile_id'])),

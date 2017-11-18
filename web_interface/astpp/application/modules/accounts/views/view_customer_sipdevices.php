@@ -16,16 +16,17 @@ $(document).ready(function() {
         quick_search("accounts/customer_details_search/"+'<?php echo $accounttype ?>'+"_sipdevices/");
     });
 
+    var updatePeriod = 5000;
     setTimeout(function updateState() {
       updateStateDevice()
         .then(function(){
-          setTimeout(updateState, 5000);
+          setTimeout(updateState, updatePeriod);
         })
         .catch(function(error){
           console.log('error get status', error);
-          setTimeout(updateState, 5000)
+          setTimeout(updateState, updatePeriod)
         });
-    }, 5000);
+    }, 0);
 });
 
 function updateStateDevice() {

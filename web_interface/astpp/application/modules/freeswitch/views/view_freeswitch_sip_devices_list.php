@@ -15,8 +15,52 @@
         $('.checkall').click(function () { 
                 $('.chkRefNos').attr('checked', this.checked); //if you want to select/deselect checkboxes use this
         });
-        
+
+      var updatePeriod = 5000;
+      setTimeout(function updateState() {
+        updateStateDevice()
+          .then(function(){
+            setTimeout(updateState, updatePeriod);
+          })
+          .catch(function(error){
+            console.log('error get status', error);
+            setTimeout(updateState, updatePeriod)
+          });
+      }, 0);
     });
+
+    function updateStateDevice() {
+      var apiUrl = '<?php echo $state_api_point_url; ?>';
+      var iconRegistered = '<?php echo $icon_registered; ?>';
+      var iconUnregistered = '<?php echo $icon_unregistered; ?>';
+      var numbers = $('#fs_sip_devices_grid tr td .number-sipdevice');
+      var promises = [];
+      $.each(numbers, function(index, item) {
+        var num = $(item).html();
+        promises.push(
+          new Promise(function(resolve, reject) {
+            $.ajax({
+              url: apiUrl + num,
+              success: function(data) {
+                var result = JSON.parse(data);
+                if (result.success) {
+                  if (result.state == 1) {
+                    $(item).closest('tr').find('.state-sipdevice').html(iconRegistered);
+                  } else {
+                    $(item).closest('tr').find('.state-sipdevice').html(iconUnregistered);
+                  }
+                }
+                resolve();
+              },
+              error: function(error) {
+                reject(error);
+              }
+            });
+          })
+        );
+      });
+      return Promise.all(promises);
+    }
 </script>
 
 <? // echo "<pre>"; print_r($grid_fields); exit;?>

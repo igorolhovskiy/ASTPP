@@ -169,6 +169,7 @@ Voicemail add edit
 	function build_system_list_for_admin() {
 		$grid_field_arr = json_encode(array(
 		array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "50", "", "", "", "","","false","center"),
+			array("State", "50", "", "", "", "","","true","center"),
 			array("User Name", "100", "username", "", "", "","","true","center"),
 			array("Password", "100", "password", "", "", "","","true","center"),
 			array("SIP Profile", "100", "sip_profile_id", "name", "sip_profiles", "get_field_name","","true","center"),
