@@ -186,9 +186,4 @@ function event_socket_request($fp, $cmd) {
 	return $result;
 }
 
-//$fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
-
-//$cmd = "api sofia xmlstatus profile ".$sip_profile_name." reg";
-//$xml_response = trim(event_socket_request($fp, $cmd));
-
 ?>
