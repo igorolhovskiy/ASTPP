@@ -171,7 +171,7 @@ class event_socket {
 	}
 }
 
-function event_socket_create($host, $port, $password) {
+function event_socket_create($host = '', $port = '', $password = '') {
 	$esl = new event_socket;
 	if ($esl->connect($host, $port, $password)) {
 		return $esl->reset_fp();
