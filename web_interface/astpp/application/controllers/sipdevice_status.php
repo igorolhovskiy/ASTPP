@@ -5,17 +5,19 @@
 //Include file
 include (FCPATH."../../freeswitch/fs/lib/fusion.eventsocket.php");
 include (FCPATH."../../freeswitch/fs/lib/astpp.sipstatus.php");
+error_reporting(0);
 
 class Sipdevice_Status extends MX_Controller
 {
-	function Getbalance()
+	function __construct()
 	{
 		parent::__construct();
 	}
 
 	function index() {
-		if (isset($_REQUEST['username'])) {
-			$sip_device_to_search = $_REQUEST['username'];
+		$username = $this->input->get('username');
+		if (!empty($this->session->userdata['username']) && !empty($username)) {
+			$sip_device_to_search = $username;
 			if (get_device_status($sip_device_to_search)) {
 				$result = array('success' => true, 'state' => 1);
 			} else {
