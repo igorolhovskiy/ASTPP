@@ -3,8 +3,8 @@
  * Get sip device status
  */
 //Include file
-include (FCPATH."../../freeswitch/fs/lib/fusion.eventsocket.php");
-include (FCPATH."../../freeswitch/fs/lib/astpp.sipstatus.php");
+include (FCPATH."../fs/lib/fusion.eventsocket.php");
+include (FCPATH."../fs/lib/astpp.sipstatus.php");
 error_reporting(0);
 
 class Sipdevice_Status extends MX_Controller
