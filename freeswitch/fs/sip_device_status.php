@@ -4,8 +4,8 @@
 include ("lib/fusion.eventsocket.php");
 include ("lib/astpp.sipstatus.php");
 
-if (isset($_POST['username'])) {
-    $sip_device_to_search = $_POST['username'];
+if (isset($_REQUEST['username'])) {
+    $sip_device_to_search = $_REQUEST['username'];
     if (get_device_status($sip_device_to_search)) {
         $result = array('success' => true, 'state' => 1);
     } else {
