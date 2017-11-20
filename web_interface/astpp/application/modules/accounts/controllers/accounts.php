@@ -633,7 +633,7 @@ class Accounts extends MX_Controller {
 			$data['grid_fields'] = $this->freeswitch->freeswitch_form->build_devices_list_for_customer();
 			$data['edit_id'] = $edit_id;
 			$data['accounttype'] = $accounttype;
-			$data['state_api_point_url'] = base_url().'accounts/customer_state_sipdevice/'; // TODO Here to put correct API
+			$data['state_api_point_url'] = SIPDEVICE_STATE_API_POINT_URL;
 			$data['icon_registered'] = '<span class="fa-lg"><i class="fa fa-circle" aria-hidden="true" style="color:green;"></i> </span>';
 			$data['icon_unregistered'] = '<span class="fa-lg"><i class="fa fa-circle-o" aria-hidden="true"></i> </span>';
 			$this->load->view('view_customer_sipdevices', $data);

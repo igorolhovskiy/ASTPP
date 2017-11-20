@@ -112,6 +112,6 @@ define("CUSTOMERPROFILE_ARRAY",serialize(array(
 define("DATABASE_DIRECTORY",FCPATH.'database_backup'.DIRECTORY_SEPARATOR);
 define('LOCALE_REQUEST_PARAM', 'lang');
 define('WEBSITE_DOMAIN', 'messages');
-
+define('SIPDEVICE_STATE_API_POINT_URL', 'http://localhost:8735/sip_device_status.php?username=');
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */
