@@ -23,4 +23,5 @@ What to found in this fork
  - Invoice templates
  - Packages now taken from Rate Groups and assigned to customer directly
  - Reworked billing, now rate rules applied on packages as well
+ - Showing SIP device states
  - More to come...
