@@ -307,6 +307,7 @@ class GenerateInvoice extends MX_Controller {
         $invoiceid = $this->db->insert_id();
 	if ($automatic_flag == 0 && $invoice_type !== 'zero') {
             $this->download_invoice($invoiceid, $account, $invoiceconf);
+			$this->download_cdr($invoiceid, $account, $invoiceconf);
 	}
         return $invoiceid;
     }
@@ -351,9 +352,9 @@ class GenerateInvoice extends MX_Controller {
      * @param string $FilePath
      * @param string $Filenm
      */
-    function send_email_notification($FilePath, $Filenm, $AccountData, $invoice_conf, $invData) {
+    function send_email_notification($FilePath, $Filenm, $AccountData, $invoice_conf, $invData, $template_name = 'email_new_invoice') {
         $TemplateData = array();
-        $where = array('name' => 'email_new_invoice');
+        $where = array('name' => $template_name);
         $EmailTemplate = $this->db_model->getSelect("*", "default_templates", $where);
         foreach ($EmailTemplate->result_array() as $TemplateVal) {
             $TemplateData = $TemplateVal;
@@ -384,6 +385,153 @@ class GenerateInvoice extends MX_Controller {
         //echo "<pre>"; print_r($TemplateData); exit;
         $this->db->insert("mail_details", $email_array);
     }
+
+	function download_cdr($invoiceid, $accountdata, $invoice_conf) {
+		$invoicedata = $this->db_model->getSelect("*", "invoices", array("id" => $invoiceid));
+		$invoicedata = $invoicedata->result_array();
+		$invoicedata = $invoicedata[0];
+		$currency_id=$accountdata['currency_id'];
+		$currency=$this->common->get_field_name('currency', 'currency', $currency_id);
+		$this->db->select('count(*) as count,sum(billseconds) as billseconds,sum(debit) as total_debit,sum(cost) as total_cost,group_concat(distinct(pricelist_id)) as pricelist_ids,group_concat(distinct(trunk_id)) as trunk_ids,group_concat(distinct(accountid)) as accounts_ids');
+		$this->db->where(array(
+			'accountid' => $accountdata['id'],
+			'callstart >= ' => $invoicedata['from_date'],
+			'callstart <=' => $invoicedata['to_date']
+		));
+		$this->db->where_in('type', array('0','3'));
+		$count_res = $this->db->get('cdrs');
+		$count_all = (array) $count_res->first_row();
+		if ($count_all['count'] > 0) {
+			//Initialization of Rategroup and Trunk Array
+			$pricelist_arr = array();
+			$trunk_arr = array();
+			$account_arr=array();
+			$this->db->select('callstart,callerid,callednum,pattern,notes,billseconds,disposition,debit,cost,accountid,pricelist_id,calltype,is_recording,trunk_id,uniqueid');
+			$query = $this->db->get('cdrs');
+
+			//Get Decimal points,system currency and user currency.
+			$currency_info = $this->common->get_currency_info($accountdata);
+			$show_seconds = 'minutes';
+			$where = "id IN (" . $count_all['pricelist_ids'] . ")";
+			$this->db->where($where);
+			$this->db->select('id,name');
+			$pricelist_res = $this->db->get('pricelists');
+			$pricelist_res = $pricelist_res->result_array();
+			foreach ($pricelist_res as $value) {
+				$pricelist_arr[$value['id']] = $value['name'];
+			}
+			$where = "id IN (" . $count_all['accounts_ids'] . ")";
+			$this->db->where($where);
+			$this->db->select('id,number,first_name,last_name');
+			$account_res = $this->db->get('accounts');
+			foreach ($account_res->result_array() as $value) {
+				$account_arr[$value['id']] =$value['first_name'] . " " . $value['last_name'] . ' (' . $value['number'] . ')';
+			}
+
+			if($accountdata['type'] !=1){
+				$customer_array[] = array("Date", "CallerID", "Called Number", "Code", "Destination", "Duration", "Debit($currency)", "Cost($currency)", "Disposition", "Account", "Trunk", "Rate Group", "Call Type");
+				$where = "id IN (" . $count_all['trunk_ids'] . ")";
+				$this->db->where($where);
+				$this->db->select('id,name');
+				$trunk_res = $this->db->get('trunks');
+				$trunk_res = $trunk_res->result_array();
+				foreach ($trunk_res as $value) {
+					$trunk_arr[$value['id']] = $value['name'];
+				}
+				foreach ($query->result_array() as $value) {
+					$duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0 ) ?
+						floor($value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00"  : $value['billseconds'];
+					$account=isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
+					$customer_array[] = array(
+						$this->common->convert_GMT_to('', '', $value['callstart']),
+						$value['callerid'],
+						$value['callednum'],
+						filter_var($value['pattern'], FILTER_SANITIZE_NUMBER_INT),
+						$value['notes'],
+						$duration,
+						$this->common->calculate_currency_manually($currency_info, $value['debit'],false,false),
+						$this->common->calculate_currency_manually($currency_info, $value['cost'],false,false),
+						$value['disposition'],
+						$account,
+						isset($trunk_arr[$value['trunk_id']]) ? $trunk_arr[$value['trunk_id']] : '',
+						isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
+						$value['calltype'],
+					);
+				}
+				$duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0 ) ?
+					floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00"  : $count_all['billseconds'];
+				$customer_array[] = array("Grand Total",
+					"",
+					"",
+					"",
+					"",
+					$duration,
+					$this->common->calculate_currency_manually($currency_info, $count_all['total_debit'],false,false),
+					$this->common->calculate_currency_manually($currency_info, $count_all['total_cost'],false,false),
+					"",
+					"",
+					"",
+					"",
+					"",
+					"",
+					"",
+					"",
+				);
+			}else{
+				$customer_array[] = array("Date", "CallerID", "Called Number", "Code", "Destination", "Duration", "Debit($currency)", "Cost($currency)", "Disposition", "Account","Rate Group", "Call Type");
+				foreach ($query->result_array() as $value) {
+					$duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0 ) ?
+						floor($value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00"  : $value['billseconds'];
+					$account=isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
+					$customer_array[] = array(
+						$this->common->convert_GMT_to('', '', $value['callstart']),
+						$value['callerid'],
+						$value['callednum'],
+						filter_var($value['pattern'], FILTER_SANITIZE_NUMBER_INT),
+						$value['notes'],
+						$duration,
+						$this->common->calculate_currency_manually($currency_info, $value['debit'],false,false),
+						$this->common->calculate_currency_manually($currency_info, $value['cost'],false,false),
+						$value['disposition'],
+						$account,
+						isset($pricelist_arr[$value['pricelist_id']]) ? $pricelist_arr[$value['pricelist_id']] : '',
+						$value['calltype'],
+					);
+				}
+				$duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0 ) ?
+					floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00"  : $count_all['billseconds'];
+				$customer_array[] = array("Grand Total",
+					"",
+					"",
+					"",
+					"",
+					$duration,
+					$this->common->calculate_currency_manually($currency_info, $count_all['total_debit'],false,false),
+					$this->common->calculate_currency_manually($currency_info, $count_all['total_cost'],false,false),
+					"",
+					"",
+					"",
+					"",
+					"",
+					"",
+					"",
+				);
+			}
+		}
+		$this->load->helper('csv');
+		if(isset($customer_array)){
+			$csv_data = array_to_csv($customer_array);
+		} else{
+			$customer_array[] = array("Date", "CallerID", "Called Number", "Code", "Destination", "Duration", "Debit($currency)", "Cost($currency)", "Disposition", "Account","Rate Group", "Call Type");
+			$csv_data = array_to_csv($customer_array);
+		}
+		$filename = $invoicedata['invoice_prefix'].$invoicedata['invoiceid'] . '_CDR'. '.csv';
+		$filepath = FCPATH."invoices/".$accountdata["id"].'/'.$filename;
+		file_put_contents ( $filepath, $csv_data);
+		if ($invoice_conf['invoice_notification']) {
+			$this->send_email_notification($filepath, $filename, $accountdata, $invoice_conf, $invoicedata, 'email_detail_cdr');
+		}
+	}
 
 }
 

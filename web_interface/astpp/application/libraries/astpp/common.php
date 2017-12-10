@@ -1680,11 +1680,13 @@ class common {
         return $status_array;
     }
 
-    function get_currency_info() {
+    function get_currency_info($accountinfo = null) {
         //System Currency info 
         $base_currency = Common_model::$global_config['system_config']['base_currency'];
-        //Get Account Information from session to get currency_id
-        $accountinfo = $this->CI->session->userdata('accountinfo');
+        if (is_null($accountinfo)) {
+			//Get Account Information from session to get currency_id
+			$accountinfo = $this->CI->session->userdata('accountinfo');
+		}
         //Get User Currency id 
         $user_currency_id = $accountinfo['currency_id'] > 0 ? $accountinfo['currency_id'] : $base_currency;
         $where = "currency = '".$base_currency."' OR id= ".$user_currency_id;
