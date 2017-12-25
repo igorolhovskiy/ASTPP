@@ -97,7 +97,7 @@ class Invoices extends MX_Controller {
 			$invoice_total_query= $invoice_total_query->result_array();
 			//echo '<pre>'; print_r($invoice_total_query); 
 			if($value['type'] == 'I'){
-			$outstanding -= $this->common->currency_decimal($invoice_total_query[0]['credit']);
+				$outstanding = $outstanding - $invoice_total_query[0]['credit'];
 			}else{
 			$outstanding='';
 			}
@@ -976,7 +976,10 @@ class Invoices extends MX_Controller {
     
 	 if(!empty($response_arr)){
         
-		$amount=$response_arr['amount'];       
+		$amount = $response_arr['amount'];
+	 	$amount = str_replace('.', '', $amount);    // Erase thousand seps
+	 	$amount = str_replace(',', '.', $amount);
+
 		$description=$response_arr['item_name'];
 		$invoice_id=$response_arr['item_number'];
 		$date = date('Y-m-d H:i:s'); 

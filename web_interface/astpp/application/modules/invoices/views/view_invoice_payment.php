@@ -434,11 +434,14 @@ if ($logintype == 0 && $accountdata['paypal_permission'] == 0) {
 
 <script>
 function payment(url){
-  var text =document.getElementById('amount').value;
+  var text = document.getElementById('amount').value;
+  if (text) {
+    text = text.replace(",", ".");
+  }
   var amount =document.getElementById('new_amount').value;
   var description =document.getElementById('description').value;
     var new_amount=parseFloat(document.getElementById('new_amount').value);
-     var total_amount =parseFloat(document.getElementById('amount').value);
+     var total_amount = parseFloat(text);
   if(text == '' || text <= '0'){
  
   document.getElementById('une').innerHTML = "Please Enter Amount.";
@@ -480,12 +483,15 @@ function payment(url){
 function amidn_pay(){
      var balance = "<php echo $amount; ?>";
      var text =document.getElementById('amount').value;
+    if (text) {
+      text = text.replace(",", ".");
+    }
      var amount =document.getElementById('new_amount').value;
      var description =document.getElementById('description').value;
      var article = document.getElementsByClassName("article").value;
      var new_amount=parseFloat(document.getElementById('new_amount').value);
      var paypal='<?php echo $paypal; ?>';
-     var total_amount =parseFloat(document.getElementById('amount').value);
+     var total_amount =parseFloat(text);
       if(text == '' || text <= '0'){
      document.getElementById('une').innerHTML = "Please Enter Amount greater than zero.";
      admin_form.amount.focus();
