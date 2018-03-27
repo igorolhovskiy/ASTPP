@@ -50,8 +50,8 @@ class Opensips_model extends CI_Model {
 		if ($accountid != "") {
 			$where = array (
 					"accountcode" => $this->common->get_field_name ( 'number', 'accounts', array (
-							'id' => $accountid 
-					) ) 
+							'id' => $accountid
+					) )
 			);
 		}
 		$instant_search = $this->session->userdata ( 'left_panel_search_' . $accounttype . '_opensips' );
@@ -77,7 +77,7 @@ class Opensips_model extends CI_Model {
 		} else {
 			if ($flag) {
 				$result = ( object ) array (
-						'num_rows' => 0 
+						'num_rows' => 0
 				);
 			} else {
 				$result = 0;
@@ -118,7 +118,7 @@ class Opensips_model extends CI_Model {
 				"domain" => $data ['domain'],
 				"effective_caller_id_name" => $data ['effective_caller_id_name'],
 				"effective_caller_id_number" => $data ['effective_caller_id_number'],
-				"status" => $data ['status'] 
+				"status" => $data ['status']
 		);
 		$this->opensips_db->where ( "id", $id );
 		$data ['last_modified_date'] = gmdate ( "Y-m-d H:i:s" );
@@ -210,5 +210,15 @@ class Opensips_model extends CI_Model {
 					break;
 			}
 		}
+	}
+
+	function add_address($data) {
+		return $this->opensips_db->insert ( "address", $data );
+	}
+
+	function del_all_address_for_account($accountid) {
+		$this->opensips_db->where ( "tag", $accountid );
+		$result = $this->opensips_db->delete ( "address" );
+		return $result;
 	}
 }
