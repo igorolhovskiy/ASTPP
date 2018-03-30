@@ -22,8 +22,6 @@ FLT_NATS=5
 FLB_NATB=6
 FLB_NATSIPPING=7
 
-INTERNAL_S=''
-
 -- SIP request routing
 -- equivalent of request_route{}
 function ksr_request_route()
