@@ -58,7 +58,7 @@ class Login extends MX_Controller {
 			if (!empty($_POST) && trim($_POST['username']) != '' && trim($_POST['password']) != '') {
 			$_POST['password']=$this->common->encode($_POST['password']);
 				$user_valid = $this->Auth_model->verify_login($_POST['username'], $_POST['password']);
-                
+
 				if ($user_valid == 1) {
 					$this->session->set_userdata('user_login', TRUE);
 			$where = "number = '".$this->db->escape_str($_POST['username'])."' OR email = '".$this->db->escape_str($_POST['username'])."'";
@@ -107,7 +107,7 @@ class Login extends MX_Controller {
 		}
 		$res = $this->db->get("invoice_conf");
 		$logo_arr = $res->result();
-	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "logo.png";
+	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "1_consertis_small.jpg";
 		$data['user_header'] = (isset($logo_arr[0]->website_title) && $logo_arr[0]->website_title != "") ? $logo_arr[0]->website_title : "ASTPP - Open Source Voip Billing Solution";
 		$data['user_footer'] = (isset($logo_arr[0]->website_footer) && $logo_arr[0]->website_footer != "") ? $logo_arr[0]->website_footer : "Inextrix Technologies Pvt. Ltd All Rights Reserved.";
 		$this->session->set_userdata('user_logo', $data['user_logo']);

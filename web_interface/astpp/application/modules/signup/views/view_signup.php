@@ -135,7 +135,8 @@ ASTPP work best with JavaScript enabled
 														if(isset($this->session->userdata['user_logo']) && $this->session->userdata['user_logo'] != ""){
 															$logo = $this->session->userdata['user_logo'];
 														}else{
-															$logo = 'logo.png';
+															// $logo = 'logo.png';
+															$logo = '1_consertis_small.jpg';
 														}
 														
 													if ($this->session->userdata('userlevel_logintype') != '0') {?>
