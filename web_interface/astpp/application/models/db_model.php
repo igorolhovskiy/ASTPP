@@ -613,7 +613,17 @@ function build_concat_select_dropdown($select, $table, $id_where = '', $id_value
 							if (array_key_exists($key . "-string", $value)) {
 								$this->get_string_array($key, $value[$key . "-string"], $value[$key]);
 							}
-                            
+                            if ($key === 'accountid') {
+								$accounts = [];
+								foreach ($value as $account) {
+									if (!empty($account)) {
+										$accounts[] = $account;
+									}
+								}
+								if (count($accounts) > 0) {
+									$this->db->where_in($key, $accounts);
+								}
+							}
 							/**
                             ASTPP  3.0 
                             first used,creation,expiry search date picker

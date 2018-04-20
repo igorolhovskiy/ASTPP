@@ -48,9 +48,9 @@ class Reports_form {
 		array('Debit ', 'INPUT', array('name' => 'debit[debit]', 'value' => '', 'size' => '20', 'class' => "text field "), '', 'Tool tips info', '1', 'debit[debit-integer]', '', '', '', 'search_int_type', ''),
 			array('Cost ', 'INPUT', array('name' => 'cost[cost]', 'value' => '', 'size' => '20', 'class' => "text field "), '', 'Tool tips info', '1', 'cost[cost-integer]', '', '', '', 'search_int_type', ''),
 		array('Disposition', 'disposition', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', '', '', '', 'set_despostion'),
-			array('Account', 'accountid', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'IF(`deleted`=1,concat( first_name, " ", last_name, " ", "(", number, ")^" ),concat( first_name, " ", last_name, " ", "(", number, ")" )) as number', 'accounts', 'build_dropdown_deleted', 'where_arr', array("reseller_id" => "0","type"=>"GLOBAL")),
+			array('Account', 'accountid[]', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'IF(`deleted`=1,concat( first_name, " ", last_name, " ", "(", number, ")^" ),concat( first_name, " ", last_name, " ", "(", number, ")" )) as number', 'accounts', 'build_dropdown_deleted', 'where_arr', array("reseller_id" => "0","type"=>"GLOBAL")),
 
-			array('Company Name', 'accountid', 'SELECT', '', '', 'tOOL TIP', 'Please Enter company name', 'id', 'company_name as company_name', 'accounts', 'build_dropdown_deleted', 'where_arr', array("reseller_id" => "0","type"=>"GLOBAL", "company_name !=" => "")),
+			array('Company Name', 'accountid[]', 'SELECT', '', '', 'tOOL TIP', 'Please Enter company name', 'id', 'company_name as company_name', 'accounts', 'build_dropdown_deleted', 'where_arr', array("reseller_id" => "0","type"=>"GLOBAL", "company_name !=" => "")),
 
 	  array('Trunk', 'trunk_id', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'IF(`status`=2, concat(name,"","^"),name) as name', 'trunks', 'build_dropdown_deleted', '', array("status" => "1")),
 
