@@ -1,0 +1,1 @@
+ALTER TABLE `subscriber` ADD `accountcode` VARCHAR(20) NOT NULL, `effective_caller_id_name` VARCHAR(30), `effective_caller_id_number` VARCHAR(30), `status` tinyint(1);
