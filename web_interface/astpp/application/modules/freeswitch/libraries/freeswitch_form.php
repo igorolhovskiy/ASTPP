@@ -460,6 +460,8 @@ For Sip Profile edit on Profile name
 			array("SIP Profile", "90", "sip_profile_id", "name", "sip_profiles", "get_field_name","","true","center"),
 			array("Caller Name", "100", "effective_caller_id_name", "", "", "","","true","center"),
 			array("Caller Number", "100", "effective_caller_id_number", "", "", "","","true","center"),
+			array("Forward", "80", "forward", "", "", "","","true","center"),
+			array("Forward to", "100", "forward_to", "", "", "","","true","center"),
 			array("Voicemail", "80", "voicemail_enabled", "", "", "","","true","center"),
 			//array("Call Waiting", "105", "call_waiting", "", "", ""),
 			array("Status", "90", "status", "", "", "","","true","center"),
@@ -491,6 +493,8 @@ For Sip Profile edit on Profile name
 				array('Caller Number', 'INPUT', array('name' => 'effective_caller_id_number', 'size' => '20', 'class' => "text field medium"), '', 'tOOL TIP', 'Please Enter account number'),
 				//array('Call Waiting', 'call_waiting', 'SELECT', '', '', 'tOOL TIP', 'Please Select Status', '', '', '', 'set_call_waiting'),
 				array('Status', 'status', 'SELECT', '', '', 'tOOL TIP', 'Please Select Status', '', '', '', 'set_status'),
+				array('Forward', 'forward', 'SELECT', '', '', 'tOOL TIP', 'Please Select Forward', '', '', '', 'set_forward'),
+				array('Forward to', 'INPUT', array('name' => 'forward_to', 'size' => '20',  'class' => "text field medium"), 'regex_match[/^[0-9+\-\(\)]*$/]', 'tOOL TIP', 'Please Enter forward_to number'),
 			);
  /******
 ASTPP  3.0 
@@ -536,6 +540,8 @@ Voicemail add edit
 		$account_Arr,
 				array('Status', 'status', 'SELECT', '', '', 'tOOL TIP', 'Please Select Status', '', '', '', 'set_status'),
 				 $sip_pro,
+				array('Forward', 'forward', 'SELECT', '', '', 'tOOL TIP', 'Please Select Forward', '', '', '', 'set_forward'),
+				array('Forward to', 'INPUT', array('name' => 'forward_to', 'size' => '20',  'class' => "text field medium"), 'regex_match[/^[0-9+\-\(\)]*$/]', 'tOOL TIP', 'Please Enter forward_to number'),
 			);
 /******
 ASTPP  3.0 

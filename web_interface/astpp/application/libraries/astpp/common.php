@@ -361,6 +361,11 @@ class common {
         return $status_array;
     }
 
+	function set_forward($status = '') {
+		$status_array = array('Off' => 'Off', 'Always' => 'Always', 'Not Registered' => 'Not Registered', 'No Answer' => 'No Answer');
+		return $status_array;
+	}
+
     function set_routetype($status = '') {
         $status_array = array('0' => 'LCR', '1' => 'COST',);
         return $status_array;

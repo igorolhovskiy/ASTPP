@@ -69,8 +69,10 @@ Voicemail data get
 						ADD creation,modified date
 						*/
 						'creation_date'=>$value['creation_date'],
-						'last_modified_date'=>$value['last_modified_date']
+						'last_modified_date'=>$value['last_modified_date'],
 						/**************************************************/
+						'forward' => $value['forward'],
+						'forward_to' => $value['forward_to']
 				);
 			}
 		}
@@ -133,6 +135,8 @@ Voicemail add in database
 						   'dir_params' => json_encode($parms_array),
 						   'dir_vars' => json_encode($parms_array_vars),
 						   'sip_profile_id' => $sip_profile_id,
+		'forward' => $add_array['forward'],
+		'forward_to' => $add_array['forward_to']
 	);  
 	/****************************************8*/     
 	$this->db->insert('sip_devices', $new_array);
@@ -198,7 +202,10 @@ Voicemail edit
 	*/
 	$new_array = array('last_modified_date'=>gmdate('Y-m-d H:i:s'), 'username' => $add_array['fs_username'], 'accountid' => $add_array['accountcode'], 'status' => $add_array['status'],
 	 	 	   'dir_params' => json_encode($parms_array),
-			   'dir_vars' => json_encode($parms_array_vars), 'sip_profile_id' => $add_array['sip_profile_id']);
+			   'dir_vars' => json_encode($parms_array_vars), 'sip_profile_id' => $add_array['sip_profile_id'],
+			'forward' => $add_array['forward'],
+			'forward_to' => $add_array['forward_to']
+		);
 		/*******************************************/			   
 	$this->db->where('id', $id);
 	$this->db->update('sip_devices', $new_array);
@@ -231,7 +238,10 @@ Voicemail edit data get
 						'vm_keep_local_after_email' => $vars_new['vm-keep-local-after-email'],
 						'vm_send_all_message' => $vars_new['vm-email-all-messages'],
 						'effective_caller_id_number' => $vars->effective_caller_id_number,
-						'fs_password' => $passowrds->password);
+						'fs_password' => $passowrds->password,
+						'forward' => $value['forward'],
+						'forward_to' => $value['forward_to']
+				);
 		}
 		return $query;
 	}

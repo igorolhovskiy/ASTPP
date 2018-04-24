@@ -343,6 +343,8 @@ Customer side show voice mail detials
 					$this->common->get_field_name('name', '`sip_profiles', array('id' => $value['sip_profile_id'])),
 					$value['effective_caller_id_name'],
 					$value['effective_caller_id_number'],
+					$value['forward'],
+					$value['forward_to'],
 					$voicemail_enabled,
 					$this->common->get_status('status', 'sip_devices',$value),
 					$this->common->convert_GMT_to('','',$value['creation_date']),
