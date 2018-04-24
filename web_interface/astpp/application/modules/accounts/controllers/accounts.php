@@ -878,10 +878,20 @@ class Accounts extends MX_Controller {
 							$did_arr=array_merge($did_arr,$reseller_pricing);
 						}
 					}
+					$this->load->module('freeswitch/freeswitch');
+					$sip_devices = $this->freeswitch->freeswitch_model->get_sipdevices_list(true, $accountid, null, 0, 1);
+					$extensions = '';
+					if (count($sip_devices) > 0) {
+						$extensions = $sip_devices[0]['username'];
+					}
 					$available_bal = $this->db_model->get_available_bal($account_arr);
 					if ($available_bal >= $did_arr['setup']) {
 						$available_bal = $this->db_model->update_balance($did_arr['setup'], $accountid, "debit");
-						$this->db_model->update("dids", array($field_name => $accountid, "assign_date" => gmdate("Y-m-d H:i:s")), array("id" => $did_id));
+						$this->db_model->update("dids", array(
+								$field_name => $accountid,
+								"assign_date" => gmdate("Y-m-d H:i:s"),
+								"extensions" => $extensions
+							), array("id" => $did_id));
 						if ($account_arr['type'] == 1) {
 							$this->load->module('did/did');
 							$this->did->did_model->insert_reseller_pricing($account_arr, $did_arr);
