@@ -53,6 +53,7 @@ cp -rf freeswitch/fs/* /var/www/html/fs/.
 chown -Rf root.root /var/www/html/fs
 rm -rf /usr/local/freeswitch/scripts/*
 cp -rf freeswitch/scripts/* /usr/local/freeswitch/scripts/.
+chown -R www-data. /var/www/html/astpp/captcha/
 echo "Update successfully Completed !!!!!!"
 
 rm -rf ${TEMPDIR}
