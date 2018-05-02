@@ -890,7 +890,8 @@ class Accounts extends MX_Controller {
 						$this->db_model->update("dids", array(
 								$field_name => $accountid,
 								"assign_date" => gmdate("Y-m-d H:i:s"),
-								"extensions" => $extensions
+								"extensions" => $extensions,
+								"status" => 0
 							), array("id" => $did_id));
 						if ($account_arr['type'] == 1) {
 							$this->load->module('did/did');
