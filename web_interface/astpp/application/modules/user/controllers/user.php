@@ -256,7 +256,19 @@ class User extends MX_Controller {
 					$available_bal = $this->db_model->update_balance($setup_cost,$accountinfo["id"], "debit");
 					$accountinfo=(array)$this->db->get_where('accounts',array("id"=>$accountinfo['id']))->first_row();
 					$this->common->add_invoice_details($accountinfo,"DIDCHRG",$setup_cost,$did_arr['number']);
-					$this->db_model->update("dids", array("accountid" => $accountinfo["id"],"assign_date" => gmdate('Y-m-d H:i:s')), array("id" => $did_id));
+
+					$this->load->module('freeswitch/freeswitch');
+					$sip_devices = $this->freeswitch->freeswitch_model->get_sipdevices_list(true, $accountinfo['id'], null, 0, 1);
+					$extensions = '';
+					if (count($sip_devices) > 0) {
+						$extensions = $sip_devices[0]['username'];
+					}
+					$this->db_model->update("dids", array(
+						"accountid" => $accountinfo["id"],
+						"assign_date" => gmdate('Y-m-d H:i:s'),
+						"extensions" => $extensions,
+						"status" => 0
+						), array("id" => $did_id));
 					$this->common->mail_to_users('email_add_did', $account_arr,"",$did_arr['number']);
 					$this->session->set_flashdata('astpp_errormsg', 'Did added successfully.');
 					redirect(base_url() . "user/user_didlist/");
