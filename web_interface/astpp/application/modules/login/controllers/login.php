@@ -140,7 +140,7 @@ class Login extends MX_Controller {
 	$this->db->where(array("domain"=>$_SERVER["HTTP_HOST"]));
 	$res = $this->db->get("invoice_conf");
 	$logo_arr = $res->result();
-	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "logo.png";
+	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "1_consertis_small.jpg";
 	$data['website_header'] = (isset($logo_arr[0]->website_title) && $logo_arr[0]->website_title != "") ? $logo_arr[0]->website_title : "ASTPP - Open Source Voip Billing Solution";
 	$data['website_footer'] = (isset($logo_arr[0]->website_footer) && $logo_arr[0]->website_footer != "") ? $logo_arr[0]->website_footer : "Inextrix Technologies Pvt. Ltd All Rights Reserved.";
 	$this->session->set_userdata('user_logo', $data['user_logo']);
@@ -163,7 +163,7 @@ class Login extends MX_Controller {
 		  $logo_arr = $res->result();
 //print_r( $logo_arr );exit;
 
-	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "logo.png";
+	$data['user_logo'] = (isset($logo_arr[0]->logo) && $logo_arr[0]->logo != "") ? $logo_arr[0]->accountid."_".$logo_arr[0]->logo : "1_consertis_small.jpg";
 		 $data['user_header'] = (isset($logo_arr[0]->website_title) && $logo_arr[0]->website_title != "") ? $logo_arr[0]->website_title : "ASTPP - Open Source Voip Billing Solution";
  $data['user_footer'] = (isset($logo_arr[0]->website_footer) && $logo_arr[0]->website_footer != "") ? $logo_arr[0]->website_footer : "Inextrix Technologies Pvt. Ltd All Rights Reserved.";
 		
