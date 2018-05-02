@@ -117,6 +117,8 @@ Voicemail add in database
 	$add_array['status'] = isset($add_array['status']) ? $add_array['status'] : "0";
 	$parms_array_vars = array('effective_caller_id_name' => $add_array['effective_caller_id_name'],
  				  'effective_caller_id_number' => $add_array['effective_caller_id_number'],
+				'forward_type' => $add_array['forward'],
+				'forward_to' => $add_array['forward_to'],
 				  'user_context' => 'default');
 	/*
 	ASTPP  3.0 
@@ -177,7 +179,10 @@ Voicemail edit
 			//echo "<pre>";print_r($parms_array);exit;
 
 	$parms_array_vars = array('effective_caller_id_name' => $add_array['effective_caller_id_name'],
-	'effective_caller_id_number' => $add_array['effective_caller_id_number'],);
+	'effective_caller_id_number' => $add_array['effective_caller_id_number'],
+		'forward_type' => $add_array['forward'],
+		'forward_to' => $add_array['forward_to']
+	);
 	$log_type = $this->session->userdata("logintype");
 	if ($log_type == 0 || $log_type == 3 || $log_type == 1) {
 		$add_array['sip_profile_id'] = $this->common->get_field_name('id', 'sip_profiles', array('name'=>'default'));
