@@ -216,7 +216,10 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 	 elseif (tonumber(didinfo['call_type']) == 3 and didinfo['extensions'] ~= '') then
 	    table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]]);     
 		if (config['opensips'] == '1') then
-            table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])
+			table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])
+			
+			-- Add here forward to PSTN part.
+
             table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} param vm-enabled} == true ? YES : NO)}" expression="^YES$">]])
             table.insert(xml, [[<action application="answer"/>]])
             table.insert(xml, [[<action application="export" data="voicemail_alternate_greet_id=]]..destination_number..[["/>]])
@@ -225,7 +228,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             table.insert(xml, [[</condition>]])
         else
             table.insert(xml, [[<action application="bridge" data="{sip_invite_params=user=LOCAL,sip_from_uri=]]..didinfo['extensions']..[[@${domain_name}}sofia/default/]]..didinfo['extensions']..[[@]]..config['opensips_domain']..[["/>]]);
-        end
+		end
 	elseif(tonumber(didinfo['call_type']) == 2 and didinfo['extensions'] ~= '') then
 		table.insert(xml, [[<action application="set" data="calltype=OTHER"/>]]); 
 		table.insert(xml, [[<action application="bridge" data="]]..didinfo['extensions']..[["/>]]);
