@@ -68,7 +68,7 @@ cd /usr/src/
 echo ""
 # read -p "Enter your email address: ${EMAIL}"
 # EMAIL=${REPLY}
-git clone -b v3.5-kamailio https://github.com/samael33/ASTPP.git
+git clone -b v3.5-kamailio https://github.com/samael33/ASTPP.git ASTPP
 NAT1=$(dig +short myip.opendns.com @resolver1.opendns.com)
 NAT2=$(curl http://ip-api.com/json/)
 INTF=$(ifconfig $1|sed -n 2p|awk '{ print $2 }'|awk -F : '{ print $2 }')
