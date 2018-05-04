@@ -21,7 +21,7 @@
 ###############################################################################
 
 clear;
-echo "**************     Script to update ASTPP Version to 3.5   *******************"
+echo "**************     Script to update ASTPP     *******************"
 echo " "
 read -n 1 -p "Press any key to continue ..."
 
@@ -66,9 +66,9 @@ rm -rf /usr/src/ASTPP/
 rm -rf /usr/src/Enterprise/
 cd /usr/src/
 echo ""
-read -p "Enter your email address: ${EMAIL}"
-EMAIL=${REPLY}
-git clone https://github.com/iNextrix/ASTPP.git
+# read -p "Enter your email address: ${EMAIL}"
+# EMAIL=${REPLY}
+git clone -b v3.5-kamailio https://github.com/samael33/ASTPP.git
 NAT1=$(dig +short myip.opendns.com @resolver1.opendns.com)
 NAT2=$(curl http://ip-api.com/json/)
 INTF=$(ifconfig $1|sed -n 2p|awk '{ print $2 }'|awk -F : '{ print $2 }')
@@ -125,7 +125,7 @@ VERSION=3.5
 echo "New SQL File Name : "$filename_sql;
 [ -f $ASTPP_SOURCE_DIR/database/$filename_sql ] && mysql -h${dbhost} -u${dbuser} -p${dbpass} ${dbname} < $ASTPP_SOURCE_DIR/database/$filename_sql || echo "Database update not succeed !!!"
 fi
-curl --data "email=$EMAIL" --data "data=$NAT2" --data "type=Update" http://astppbilling.org/lib/
+# curl --data "email=$EMAIL" --data "data=$NAT2" --data "type=Update" http://astppbilling.org/lib/
 echo "******************************************************************************************"
 echo "******************************************************************************************"
 echo "******************************************************************************************"
