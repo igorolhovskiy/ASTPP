@@ -39,7 +39,7 @@ get_linux_distribution () {
 		 apt-get install -y dnsutils
         elif  [ -f /etc/redhat-release ]; then
                 DIST="CENTOS"
-		yum install bind-utils
+		yum -y install bind-utils
         else
                 DIST="OTHER"
         fi
