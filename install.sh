@@ -306,7 +306,7 @@ astpp_freeswitch_startup_script ()
 		if [ ! -d ${ASTPP_SOURCE_DIR} ]; then
 			echo "ASTPP source doesn't exists, downloading it..."
 			cd /usr/src/			
-			git clone -b v3.5 https://github.com/iNextrix/ASTPP.git
+			git clone -b v3.5-kamailio https://github.com/samael33/ASTPP.git
 			cp -rf ASTPP latest			
 		fi 		
 		if [ ${DIST} = "DEBIAN" ]; then
