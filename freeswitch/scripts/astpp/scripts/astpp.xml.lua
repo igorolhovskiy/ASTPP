@@ -195,7 +195,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 		table.insert(xml, [[<action application="set" data="accountcode=]]..didinfo['account_code']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="caller_did_account_id=]]..userinfo['id']..[["/>]]);
         table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_did_rates..[["/>]]);
-		table.insert(xml, [[<action application="transfer" data="]]..didinfo['extensions']..[[ XML default"/>]]);
+		table.insert(xml, [[<action application="transfer" data="]]..didinfo['extensions']..[[ XML default"/>]])
 
 	elseif (tonumber(didinfo['call_type']) == 1 and didinfo['extensions'] ~= '') then
 
@@ -213,12 +213,18 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
     	  table.insert(xml, [[<action application="bridge" data="{sip_invite_params=user=LOCAL,sip_from_uri=]]..didinfo['extensions']..[[@${domain_name}}sofia/default/]]..didinfo['extensions']..[[@]]..config['opensips_domain']..[["/>]]);
         end
 
-	 elseif (tonumber(didinfo['call_type']) == 3 and didinfo['extensions'] ~= '') then
+	 elseif (tonumber(didinfo['call_type']) == 3 and didinfo['extensions'] ~= '') then -- SIP-DID part
 	    table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]]);     
 		if (config['opensips'] == '1') then
 			table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])
 			
 			-- Add here forward to PSTN part.
+			table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type} == Off ? YES : NO)}" expression="^NO$">]])
+			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\d*$">]])
+			table.insert(xml, [[action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
+			table.insert(xml, [[<action application="transfer" data="${forward_to} XML default"/>]])
+            table.insert(xml, [[</condition>]])			
+			-- End forward to PSTN part
 
             table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} param vm-enabled} == true ? YES : NO)}" expression="^YES$">]])
             table.insert(xml, [[<action application="answer"/>]])
