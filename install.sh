@@ -114,13 +114,13 @@ get_linux_distribution
 
 install_epel () 
 {
-		yum install epel-release
+		yum -y install epel-release
 }
 
 remove_epel () 
 {
 		# only on CentOS
-		yum remove epel-release
+		yum -y remove epel-release
 }
 
 # Generate random password (for MySQL)
