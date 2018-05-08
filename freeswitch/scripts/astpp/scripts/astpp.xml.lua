@@ -190,12 +190,9 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 	    table.insert(xml, [[<action application="limit" data="db ]]..destination_number..[[ did_]]..destination_number..[[ ]]..didinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);        
 	end
 
-	if (tonumber(didinfo['call_type']) == 0 and didinfo['extensions'] ~= '') then
-		table.insert(xml, [[<action application="set" data="calltype=STANDARD"/>]]);     
-		table.insert(xml, [[<action application="set" data="accountcode=]]..didinfo['account_code']..[["/>]]);
-		table.insert(xml, [[<action application="set" data="caller_did_account_id=]]..userinfo['id']..[["/>]]);
-        table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_did_rates..[["/>]]);
-		table.insert(xml, [[<action application="transfer" data="]]..didinfo['extensions']..[[ XML default"/>]])
+    if (tonumber(didinfo['call_type']) == 0 and didinfo['extensions'] ~= '') then
+
+        freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, didinfo['extensions'])
 
 	elseif (tonumber(didinfo['call_type']) == 1 and didinfo['extensions'] ~= '') then
 
@@ -215,18 +212,23 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 
 	 elseif (tonumber(didinfo['call_type']) == 3 and didinfo['extensions'] ~= '') then -- SIP-DID part
 	    table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]]);     
-		if (config['opensips'] == '1') then
-			table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])
-			
-			-- Forward to PSTN part.
-			table.insert(xml, [[<condition field="${cond '${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type}' == 'Off' ? YES : NO}" expression="^NO$" break="never">]])
+        if (config['opensips'] == '1') then
+            
+            -- Forward from SIP part. Check if forward = always
+            table.insert(xml, [[<action application="set" data="sip_forward_type=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type}" inline="true"/>]])
+			table.insert(xml, [[<condition field="${sip_forward_type}" expression="^Always$" break="never">]])
+			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\+?\d*$" break="never">]])            
+            table.insert(xml, [[<action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
+            freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
+            table.insert(xml, [[</condition>]])			
+            table.insert(xml, [[</condition>]])	
+            -- Actual call to user
+			table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])			
+			-- Forward to PSTN if Forward = Not Registered or No Answer.
+			table.insert(xml, [[<condition field="${cond '${sip_forward_type}' == 'Off' ? YES : NO}" expression="^NO$" break="never">]])
 			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\+?\d*$" break="never">]])
             table.insert(xml, [[<action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
-            table.insert(xml, [[<action application="set" data="calltype=STANDARD"/>]])
-		    table.insert(xml, [[<action application="set" data="accountcode=]]..didinfo['account_code']..[["/>]])
-		    table.insert(xml, [[<action application="set" data="caller_did_account_id=]]..userinfo['id']..[["/>]])
-            table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_did_rates..[["/>]])
-			table.insert(xml, [[<action application="transfer" data="${forward_to} XML default"/>]])
+            freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
             table.insert(xml, [[</condition>]])			
             table.insert(xml, [[</condition>]])			
 			-- End forward to PSTN part
@@ -476,4 +478,14 @@ function freeswitch_xml_callerid_redirected(xml, calleridinfo)
     if (calleridinfo['billing'] ~= nil) then
         table.insert(xml, [[<action application="set" data="sip_h_X-ASTPP-Billing=]]..calleridinfo['billing']..[["/>]])
     end
+end
+
+-- Add forward to PSTN part
+
+function freeswitch_xml_forward_to_pstn(xml, didinfo_account_code, userinfo_id, xml_did_rates, transfer_to)
+    	table.insert(xml, [[<action application="set" data="calltype=STANDARD"/>]]);     
+		table.insert(xml, [[<action application="set" data="accountcode=]] .. didinfo_account_code .. [["/>]])
+		table.insert(xml, [[<action application="set" data="caller_did_account_id=]] .. userinfo_id .. [["/>]])
+        table.insert(xml, [[<action application="set" data="origination_rates_did=]] .. xml_did_rates .. [["/>]])
+		table.insert(xml, [[<action application="transfer" data="]] .. transfer_to .. [[ XML default"/>]])
 end
