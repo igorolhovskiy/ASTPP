@@ -216,8 +216,8 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             
             -- Forward from SIP part. Check if forward = always
             table.insert(xml, [[<action application="set" data="sip_forward_type=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type}" inline="true"/>]])
-			table.insert(xml, [[<condition field="${sip_forward_type}" expression="^Always$" break="never">]])
-			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\+?\d*$" break="never">]])            
+			table.insert(xml, [[<condition field="${sip_forward_type}" expression="^Always$">]])
+			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\+?\d*$">]])            
             table.insert(xml, [[<action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
             freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
             -- Actual call to user
