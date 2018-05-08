@@ -224,6 +224,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 			table.insert(xml, [[<action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
 			table.insert(xml, [[<action application="transfer" data="${forward_to} XML default"/>]])
             table.insert(xml, [[</condition>]])			
+            table.insert(xml, [[</condition>]])			
 			-- End forward to PSTN part
 
             table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} param vm-enabled} == true ? YES : NO)}" expression="^YES$">]])
