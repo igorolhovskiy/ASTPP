@@ -29,7 +29,7 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
 	table.insert(xml, [[<section name="dialplan" description="ASTPP Dialplan">]]);
 	table.insert(xml, [[<context name="]]..params:getHeader("Caller-Context")..[[">]]);
 	table.insert(xml, [[<extension name="]]..destination_number..[[">]]); 
-	table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]]);
+	table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[" break="never">]]);
 	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..destination_number..[["/>]]); 
 	table.insert(xml, [[<action application="sched_hangup" data="+]]..((maxlength) * 60)..[[ normal_clearing"/>]]);  
 
@@ -220,7 +220,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 			
 			-- Forward to PSTN part.
 			table.insert(xml, [[<action application="set" data="test=${domain_name}" inline=true/>]])
-			table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type} == 'Off' ? YES : NO)}" expression="^NO$" break=never>]])
+			table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_type} == 'Off' ? YES : NO)}" expression="^NO$">]])
 			table.insert(xml, [[<condition field="${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}" expression="^\d*$">]])
 			table.insert(xml, [[<action application="set" data="forward_to=${user_data ]]..didinfo['extensions']..[[@${domain_name} var forward_to}"/>]])
 			table.insert(xml, [[<action application="transfer" data="${forward_to} XML default"/>]])
