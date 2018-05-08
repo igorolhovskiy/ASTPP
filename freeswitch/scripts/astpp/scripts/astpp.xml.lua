@@ -234,7 +234,6 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
             table.insert(xml, [[</condition>]])					
 			-- End forward to PSTN part
-
             table.insert(xml, [[<condition field="${cond(${user_data ]]..didinfo['extensions']..[[@${domain_name} param vm-enabled} == true ? YES : NO)}" expression="^YES$">]])
             table.insert(xml, [[<action application="answer"/>]])
             table.insert(xml, [[<action application="export" data="voicemail_alternate_greet_id=]]..destination_number..[["/>]])
