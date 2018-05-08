@@ -222,7 +222,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
             table.insert(xml, [[</condition>]])
             -- Actual call to user
-            table.insert(xml, [[<condition field="" expression=""/>]])
+            table.insert(xml, [[<condition field="" expression="">]])
             table.insert(xml, [[<action application="bridge" data="{sip_contact_user=]]..destination_number..[[}sofia/default/]]..destination_number..[[${regex(${sofia_contact(]]..didinfo['extensions']..[[@${domain_name})}|^[^@]+(.*)|%1)}]]..[["/>]])            
             table.insert(xml, [[</condition>]])
 			-- Forward to PSTN if Forward = Not Registered or No Answer.
