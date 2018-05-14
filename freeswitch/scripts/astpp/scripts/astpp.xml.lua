@@ -248,8 +248,12 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             table.insert(xml, [[<action application="bridge" data="{sip_invite_params=user=LOCAL,sip_from_uri=]]..didinfo['extensions']..[[@${domain_name}}sofia/default/]]..didinfo['extensions']..[[@]]..config['opensips_domain']..[["/>]]);
 		end
 	elseif(tonumber(didinfo['call_type']) == 2 and didinfo['extensions'] ~= '') then
-		table.insert(xml, [[<action application="set" data="calltype=OTHER"/>]]); 
-		table.insert(xml, [[<action application="bridge" data="]]..didinfo['extensions']..[["/>]]);
+		table.insert(xml, [[<action application="set" data="calltype=OTHER"/>]])
+		if string:find(didinfo['extensions'], "sofia/") then
+			table.insert(xml, [[<action application="bridge" data="]]..didinfo['extensions']..[["/>]])
+		else
+			table.insert(xml, [[<action application="bridge" data=sofia/default/"]]..didinfo['extensions']..[["/>]])
+		end
 	else
 		--error_xml_without_cdr(destination_number,"DID_DESTINATION_NOT_FOUND","DID",config['playback_audio_notification'],userinfo['number'])
 
