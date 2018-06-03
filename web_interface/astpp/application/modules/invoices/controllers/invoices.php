@@ -1421,7 +1421,8 @@ $payment = ' <button style="padding: 0 8px;" class="btn btn-success" type="butto
 		   $this->invoice_main_download($invoiceid);
 	  }
 	  if($type=='R'){
-		   $this->receipt_download($invoiceid);
+		   // $this->receipt_download($invoiceid);
+		   $this->receipt_download_template($invoiceid);
 	  }
 	 }else{
 	  redirect(base_url() . 'invoices/invoice_list/');
@@ -1581,6 +1582,32 @@ function invoice_screen(){
   {
       return sprintf( "%02.2d:%02.2d", floor( $seconds / 60 ), $seconds % 60 );
   }
+
+	function receipt_download_template($invoiceid) {
+
+		$invoicedata  = $this->db_model->getSelect("*", "invoices", array("id"=> $invoiceid));
+		$invoicedata = $invoicedata->result_array();
+		$invoicedata = $invoicedata[0];
+		$invoice_path='';
+		$accountid = $invoicedata['accountid'];
+		$acc_file=$invoice_path.$accountid.'/'.$invoiceid;
+		$accountdata = $this->db_model->getSelect("*","accounts",array("id"=>$accountid));
+		$accountdata =  $accountdata->result_array();
+		$accountdata = $accountdata[0];
+
+		$login_type = $this->session->userdata['userlevel_logintype'];
+		$query="select item_type,credit from invoice_details where invoiceid = ".$invoicedata['id']." and item_type='PAYMENT' Group By id order by item_type desc";
+		// echo  $query; exit;
+		$invoice_total_query=$this->db->query($query);
+
+		$this->load->module("invoices/templates");
+
+  		$invoice_path=$this->config->item('invoices_path');
+		$download_path = $invoice_path.$accountdata["id"].'/'.$invoicedata['invoice_prefix'].$invoicedata['invoiceid']."_invoice.pdf";
+//        $res = $this->common->get_invoice_template($invoicedata,$accountdata,"TRUE");
+		$res = $this->templates->get_invoice_template($invoicedata,$accountdata,"TRUE");
+	}
+
   function receipt_download($invoiceid) {
         $login_info = $this->session->userdata('accountinfo');
        ob_start();

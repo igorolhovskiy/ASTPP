@@ -206,15 +206,25 @@ class Templates extends MX_Controller {
         /*** manual invoice **/
         $this->db->where('item_type <>', 'INVPAY');
 
-        $invoice_details = $this->db_model->select('id, accountid, reseller_id, invoiceid, item_id, item_type, '.
-			'description, sum(debit) as debit, sum(credit) as credit, sum(count) as count, created_date', 'invoice_details', array(
-			"invoiceid" => $invoicedata['id'],
-			'item_type <>' => 'TAX',
-			'debit <> ' => '0'
-		), null, null, '', '', 'description');
+		if ($invoicedata['type'] === 'R') {
+			$invoice_details = $this->db_model->select('id, accountid, reseller_id, invoiceid, item_id, item_type, '.
+				'description, sum(debit) as debit, sum(credit) as credit, sum(count) as count, created_date', 'invoice_details', array(
+				"invoiceid" => $invoicedata['id'],
+				// 'item_type ' => 'PAYMENT'
+			), null, null, '', '', 'description');
+		} else {
+			$invoice_details = $this->db_model->select('id, accountid, reseller_id, invoiceid, item_id, item_type, '.
+				'description, sum(debit) as debit, sum(credit) as credit, sum(count) as count, created_date', 'invoice_details', array(
+				"invoiceid" => $invoicedata['id'],
+				'item_type <>' => 'TAX',
+				'debit <> ' => '0'
+			), null, null, '', '', 'description');
+		}
+
         $invoice_details = $invoice_details->result_array();
         $total_sum       = 0.00;
         foreach ($invoice_details as &$charge_res) {
+			$charge_res['debit'] = $charge_res['credit'];
             if ($charge_res['item_type'] == 'DIDCHRG' || $charge_res['item_type'] == 'SUBCHRG' || $charge_res['item_type'] == 'manual_inv' || $charge_res['item_type'] == 'PRODUCT') {
                 if ($charge_res['item_type'] == 'PRODUCT') {
                     $charge_res['item_type'] = 'Product Invoice';
@@ -237,6 +247,10 @@ class Templates extends MX_Controller {
 
         $template_data['invoice_details'] = $invoice_details;
         $template_data['total_sum'] = $this->common->currency_decimal($this->common_model->calculate_currency($total_sum));
+
+		if ($invoicedata['type'] === 'R') {
+			return $template_data;
+		}
 
         $invoice_tax = $this->db_model->getSelect('*', 'invoice_details', array(
             "invoiceid" => $invoicedata['id'],
@@ -399,7 +413,6 @@ class Templates extends MX_Controller {
             $template = $template_res[0];
 
             $template_data = $this->select_template_data($invoicedata, $accountdata);
-
             // parsing tbody with foreach attributes and update templates
             $print_parts_template = function($template_name) use (&$template, &$template_data) {
 				$templ = preg_replace_callback('/(<table.*>\s*<thead.*>.*<\/thead>.*)<tbody(.*)foreach="\$(\S+)"(.*)>(.*)<\/tbody>\s*<\/table>/iUsm',
@@ -420,9 +433,8 @@ class Templates extends MX_Controller {
                 return $templ;
             };
 
-
 			$head_content = $print_parts_template('head_template');
-            $first_page_content = $print_parts_template('page1_template');
+			$first_page_content = $print_parts_template('page1_template');
 			$second_page_content = $print_parts_template('page2_template');
             $footer_content = $print_parts_template('footer_template');
             $this->prepare_pdf($head_content, $first_page_content, $second_page_content, $footer_content);
@@ -482,7 +494,9 @@ class Templates extends MX_Controller {
 //            '</page_header>'.
 //            '</page>';
 
-        if (!empty($second_page_content)) {
+		$this->load->library("/simplehtmldom/simple_html_dom");
+		$second_page_plain = trim($this->simple_html_dom->load($second_page_content)->plaintext);
+        if (!empty($second_page_plain)) {
 			echo "<page backtop=\"30mm\" backbottom=\"30mm\" backleft=\"0\" backright=\"0\" style=\"font-size:10pt; margin:0; padding:0;\" >";
 			echo "<style></style>";
 			echo '<page_header>';
