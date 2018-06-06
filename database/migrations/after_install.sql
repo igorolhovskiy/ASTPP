@@ -424,7 +424,7 @@ VALUES
  ,80.4 -- priority - FLOAT NOT NULL
 );
 SELECT id FROM menu_modules WHERE menu_label = 'Receipt Templates' LIMIT 1 INTO @menu_id;
-UPDATE userlevels SET module_permissions = CONCAT(module_permissions, ',', @menu_id) WHERE  userlevelid = -1;
+UPDATE userlevels SET module_permissions = '1,2,4,5,3,8,9,13,14,15,16,17,18,19,20,21,22,25,26,27,28,7,29,30,45,38,39,40,41,42,43,44,48,49,53,54,55,56,66,68,69,77,78,100,101,102,103,104,105' WHERE userlevelid = -1;
 INSERT INTO invoice_templates SELECT '' AS id, 'R' AS type, 'default' AS name, subject, head_template,
   page1_template, '' AS page2_template, footer_template,last_modified_date FROM invoice_templates WHERE name = 'default';
 ALTER TABLE accounts ADD COLUMN receipt_template_id int(11) DEFAULT 5 AFTER invoice_template_id;
