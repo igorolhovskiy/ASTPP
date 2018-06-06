@@ -3,7 +3,7 @@
 <script type="text/javascript" language="javascript">
     $(document).ready(function() {
       
-        build_grid("configuration_grid","",<? echo $grid_fields; ?>,<? echo $grid_buttons; ?>);
+        build_grid("configuration_grid","/invoices/templates/template_list_json/<? echo $type; ?>",<? echo $grid_fields; ?>,<? echo $grid_buttons; ?>);
         
         $("#template_search_btn").click(function(){
             post_request_for_search("configuration_grid","","template_search");

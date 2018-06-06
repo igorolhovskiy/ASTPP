@@ -41,24 +41,25 @@ class Templates extends MX_Controller {
         $this->load->view('help_template', $data);
     }
 
-	function template_list() {
+	function template_list($type='I') {
+    	$data['type'] = $type;
         $data['username'] = $this->session->userdata('user_name');
         $data['page_title'] = 'Invoice Templates';
         $data['search_flag'] = true;
         $this->session->set_userdata('advance_search', 0);
         $data['grid_fields'] = $this->templates_form->build_template_list();
-        $data["grid_buttons"] = $this->templates_form->build_grid_buttons();
+        $data["grid_buttons"] = $this->templates_form->build_grid_buttons($type);
         $data['form_search'] = $this->form->build_serach_form($this->templates_form->get_template_search_form());
         $this->load->view('view_template_list', $data);
     }
 
-    function template_list_json() {
+    function template_list_json($type='I') {
         $json_data = array();
-        $count_all = $this->templates_model->gettemplate_list(false, "", "");
+        $count_all = $this->templates_model->gettemplate_list(false, "", "", $type);
         $paging_data = $this->form->load_grid_config($count_all, $_GET['rp'], $_GET['page']);
         $json_data = $paging_data["json_paging"];
 
-        $query = $this->templates_model->gettemplate_list(true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
+        $query = $this->templates_model->gettemplate_list(true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"], $type);
         $grid_fields = json_decode($this->templates_form->build_template_list());
         $json_data['rows'] = $this->form->build_grid($query, $grid_fields);
 
@@ -89,11 +90,17 @@ class Templates extends MX_Controller {
         $this->load->view('view_template_add_edit', $data);
     }
 
-    function add() {
-        $data['page_title'] = 'Add Invoice template';
-        $where = array('id' => 1);
-        $template = $this->db_model->getSelect("head_template, page1_template, page2_template, footer_template",
-            "invoice_templates", $where);
+    function add($type) {
+    	if ($type === 'I') {
+			$data['page_title'] = 'Add Invoice template';
+			$where = array('type' => 'I');
+		} else {
+			$data['page_title'] = 'Add Receipt template';
+			$where = array('type' => 'R');
+		}
+
+        $template = $this->db_model->getSelectWithOrderAndLimit("type, head_template, page1_template, page2_template, footer_template",
+            "invoice_templates", $where, 'ASC', 'id',  1);
         foreach ($template->result_array() as $key => $value) {
             $edit_data = $value;
         }
@@ -113,7 +120,7 @@ class Templates extends MX_Controller {
                 unset($data['page_title']);
                 $this->templates_model->edit_template($data, $data['id']);
                 $this->session->set_flashdata('astpp_errormsg', 'Template updated successfully!');
-                redirect(base_url() . 'invoices/templates/template_list/');
+                redirect(base_url() . 'invoices/templates/template_list/'.$data['type']);
                 exit;
             }
         } else {
@@ -224,7 +231,6 @@ class Templates extends MX_Controller {
         $invoice_details = $invoice_details->result_array();
         $total_sum       = 0.00;
         foreach ($invoice_details as &$charge_res) {
-			$charge_res['debit'] = $charge_res['credit'];
             if ($charge_res['item_type'] == 'DIDCHRG' || $charge_res['item_type'] == 'SUBCHRG' || $charge_res['item_type'] == 'manual_inv' || $charge_res['item_type'] == 'PRODUCT') {
                 if ($charge_res['item_type'] == 'PRODUCT') {
                     $charge_res['item_type'] = 'Product Invoice';
@@ -239,6 +245,10 @@ class Templates extends MX_Controller {
                     $charge_res['item_type'] = 'Subscription Charge';
                 }
             }
+			if ($invoicedata['type'] === 'R' &&
+					($charge_res['item_type'] == 'Refill' || $charge_res['item_type'] == 'PAYMENT')) {
+				$charge_res['debit'] = $charge_res['credit'];
+			}
             $debit_conv = $this->common_model->calculate_currency($charge_res['debit'], '', '', true, false);
             $charge_res['debit'] = $this->common->currency_decimal($debit_conv);
             $total_sum += $debit_conv;
@@ -403,7 +413,11 @@ class Templates extends MX_Controller {
 
 
     function get_invoice_template($invoicedata, $accountdata, $flag) {
-        $template_id = $accountdata['invoice_template_id'];
+		if ($invoicedata['type'] === 'R') {
+			$template_id = $accountdata['receipt_template_id'];
+		} else {
+			$template_id = $accountdata['invoice_template_id'];
+		}
         $template_query = $this->db_model->getSelect("*", "invoice_templates", array(
             'id' => $template_id
         ));

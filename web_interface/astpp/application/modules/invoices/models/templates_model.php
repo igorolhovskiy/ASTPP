@@ -27,12 +27,12 @@ class Templates_model extends CI_Model {
         error_reporting(E_ALL);
 	}
 
-    function gettemplate_list($flag = "", $start, $limit = "") {
+    function gettemplate_list($flag = "", $start, $limit = "", $type = "I") {
         $this->db_model->build_search('template_search');
         if ($flag) {
-            $query = $this->db_model->select("invoice_templates.*", "invoice_templates", "", "id", "ASC", $limit, $start);
+            $query = $this->db_model->select("invoice_templates.*", "invoice_templates", "type = '$type'", "id", "ASC", $limit, $start);
         } else {
-            $query = $this->db_model->countQuery("invoice_templates.*", "invoice_templates", "");
+            $query = $this->db_model->countQuery("invoice_templates.*", "invoice_templates", "type = '$type'");
         }
 
         return $query;

@@ -31,6 +31,7 @@ class Templates_form {
         $form['forms'] = array(base_url() . 'invoices/templates/template_save/', array("template_form", "name" => "template_form"));
         $form['Invoice Template'] = array(
             array('', 'HIDDEN', array('name' => 'id'), '', '', '', ''),
+			array('', 'HIDDEN', array('name' => 'type'), '', '', '', ''),
             array('Name', 'INPUT', array('name' => 'name', 'size' => '20', 'class' => "text field medium"), 'trim|required|xss_clean', 'tOOL TIP', ''),
             array('Subject', 'INPUT', array('name' => 'subject', 'size' => '20',  'class' => "text field medium"), 'trim|required|xss_clean', 'tOOL TIP', ''),
             array('Head', 'TEXTAREA', array('name' => 'head_template', 'id' => 'head_template', 'size' => '10',  'class' => "textarea medium"), 'trim|required', 'tOOL TIP', ''),
@@ -58,8 +59,8 @@ class Templates_form {
         return $form;
     }
 
-	function build_grid_buttons() {
-        $buttons_json = json_encode(array(array("Create template","btn btn-line-warning btn","fa fa-plus-circle fa-lg", "button_action", "invoices/templates/add/")
+	function build_grid_buttons($type='I') {
+        $buttons_json = json_encode(array(array("Create template","btn btn-line-warning btn","fa fa-plus-circle fa-lg", "button_action", "invoices/templates/add/$type")
         ));
         return $buttons_json;
 	}
