@@ -1552,6 +1552,11 @@ class common {
         return $status_array;
     }
 
+	function mpay24_mode($status = '') {
+		$status_array = array('0' => 'Live', '1' => 'Testing',);
+		return $status_array;
+	}
+
     function paypal_fee($status = '') {
         $status_array = array('0' => 'Paid By Admin', '1' => 'Paid By Customer',);
         return $status_array;

@@ -187,13 +187,8 @@ class Login extends MX_Controller {
   function paypal_response(){
 	  if(count($_POST)>0)
 	  {
-		$response_arr=$_POST;
-		$fp=fopen("/var/log/astpp/astpp_payment.log","w+");
-		$date = date("Y-m-d H:i:s");
-		fwrite($fp,"====================".$date."===============================\n");
-		foreach($response_arr as $key => $value){	  
-			fwrite($fp,$key.":::>".$value."\n");
-		}
+	  	$response_arr = $_POST;
+	  	$this->saveResponseToFile($_POST, "/var/log/astpp/astpp_payment.log");
 		$payment_check = $this->db_model->countQuery("txn_id", "payments", array("txn_id" => $response_arr['txn_id']));
 		if( ($response_arr["payment_status"] == "Pending" || $response_arr["payment_status"] == "Complete" || $response_arr["payment_status"] == "Completed" ) && $payment_check == 0){
 
@@ -315,6 +310,95 @@ class Login extends MX_Controller {
 	redirect(base_url() . 'user/user/');
     }
 
+
+	function mpay24_success_response() {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+		if(count($_GET)>0)
+		{
+            $response_arr = $_GET;
+            $this->saveResponseToFile($_GET, "/var/log/astpp/astpp_mpay24_success.log");
+            $invoice_id = $response_arr['TID'];
+            $this->db->where('id', $invoice_id);
+            $invoice_data = (array)$this->db->get('invoices')->first_row();
+            if (!empty($invoice_data)) {
+                $account_data = (array)$this->db->get_where("accounts", array("id" => $invoice_data["accountid"]))->first_row();
+                $currency = (array)$this->db->get_where('currency', array("id"=>$account_data["currency_id"]))->first_row();
+
+                $amount = floatval($invoice_data['amount']);
+
+                $this->savePayment($account_data, $amount, $currency, $response_arr, 'mPay24');
+
+                $this->db->where('id', $invoice_id);
+                $this->db->update('invoices', array(
+                	'confirm' => 1
+					)
+				);
+                $this->db->where('invoiceid', $invoice_id);
+                $this->db->update('invoice_details', array(
+                        'before_balance' => $account_data['balance'],
+                        'after_balance' => $account_data['balance'] + $amount
+                    )
+                );
+                $this->db_model->update_balance($amount,$account_data["id"],"credit");
+            }
+			echo 'OK';
+            $this->session->set_flashdata('astpp_errormsg', 'Transaction is successfull!');
+		}
+		redirect(base_url() . 'user/user/');
+	}
+
+    function mpay24_error_response() {
+        if(count($_GET)>0)
+        {
+			$this->saveResponseToFile($_GET, "/var/log/astpp/astpp_mpay24_error.log");
+            $invoice_id = $_GET['TID'];
+            if (!empty($invoice_id)) {
+                $this->db->where('id', $invoice_id);
+                $this->db->update('invoices', array(
+                        'deleted' => 1
+                    )
+                );
+			}
+            $this->session->set_flashdata('astpp_notification', 'Sorry, your transaction is denied.');
+            echo 'OK';
+        }
+        redirect(base_url() . 'user/user/');
+    }
+
+    function mpay24_confirmation_response() {
+        if(count($_GET)>0)
+        {
+            $this->saveResponseToFile($_GET, "/var/log/astpp/astpp_mpay24_confirmation.log");
+            echo 'OK';
+        }
+        redirect(base_url() . 'user/user/');
+    }
+
+    private function savePayment($account_data, $amount, $currency, $response_arr, $paymentSystemName) {
+        $date = date('Y-m-d H:i:s');
+		$payment_trans_array = array("accountid"=>$account_data['id'],
+			"amount"=> $amount,
+			"tax"=>"1",
+			"payment_method"=> $paymentSystemName,
+			"actual_amount"=>$amount,
+			"user_currency"=>$currency["currency"],
+			"currency_rate"=>$currency["currencyrate"],
+			"transaction_details"=>json_encode($response_arr),
+			"date"=>$date);
+		$paymentid=$this->db->insert('payment_transaction',$payment_trans_array);
+		$parent_id =$account_data['reseller_id'] > 0 ? $account_data['reseller_id'] : '-1';
+		$payment_arr = array("accountid"=> $account_data['id'],
+			"payment_mode"=>"1",
+			"credit"=>$amount,
+			"type"=>"mPay24",
+			"payment_by"=>$parent_id,
+			"notes"=>"Payment Made by $paymentSystemName on date: ".$date,
+			'payment_date'=> $date);
+		$this->db->insert('payments', $payment_arr);
+	}
+
     /**
      * @param integer $last_invoice_ID
      * @param string $due_date
@@ -329,8 +413,48 @@ class Login extends MX_Controller {
     function get_language_text(){
    // echo '<pre>'; print_r($_POST); exit;
       echo gettext($_POST['display']); 
- 	}  
-    
+ 	}
+
+	private function saveResponseToFile($response_arr=[], $filename) {
+        $fp=fopen($filename,"a+");
+        $date = date("Y-m-d H:i:s");
+        fwrite($fp,"====================".$date."===============================\n");
+        foreach($response_arr as $key => $value){
+            fwrite($fp,$key.":::>".$value."\n");
+        }
+	}
+
+    private function execute($targetFile) {
+        $data = sprintf(
+            "%s %s %s\n\nHTTP headers:\n",
+            $_SERVER['REQUEST_METHOD'],
+            $_SERVER['REQUEST_URI'],
+            $_SERVER['SERVER_PROTOCOL']
+        );
+        foreach ($this->getHeaderList() as $name => $value) {
+            $data .= $name . ': ' . $value . "\n";
+        }
+        $data .= "\nRequest body:\n";
+        file_put_contents(
+            $targetFile,
+            $data . file_get_contents('php://input') . "\n"
+        );
+        echo("Done!\n\n");
+    }
+    private function getHeaderList() {
+        $headerList = [];
+        foreach ($_SERVER as $name => $value) {
+            if (preg_match('/^HTTP_/',$name)) {
+                // convert HTTP_HEADER_NAME to Header-Name
+                $name = strtr(substr($name,5),'_',' ');
+                $name = ucwords(strtolower($name));
+                $name = strtr($name,' ','-');
+                // add to list
+                $headerList[$name] = $value;
+            }
+        }
+        return $headerList;
+    }
 }
 
 ?>

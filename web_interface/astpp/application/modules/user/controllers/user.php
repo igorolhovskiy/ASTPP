@@ -1541,6 +1541,10 @@ class User extends MX_Controller {
 		array_to_csv($customer_array, 'Customer_CDR_' . date("Y-m-d") . '.csv');
 	}
 	function user_payment($action=""){
+		ini_set('display_errors', 1);
+		ini_set('display_startup_errors', 1);
+		error_reporting(E_ALL);
+
 	  if(common_model::$global_config['system_config']['paypal_status'] == 1){
 		redirect(base_url() . 'user/user/');  
 	  }

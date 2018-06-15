@@ -74,6 +74,7 @@ $class = "active";
 	<li class="<?php if ($group_title == 'callingcard') { echo $class; } ?>"><a href ='<?php echo base_url(); ?>systems/configuration/callingcard'>Callingcard</a></li>
 	<li class="<?php if ($group_title == 'opensips') { echo $class; } ?>"><a href ='<?php echo base_url(); ?>systems/configuration/opensips'>Opensips</a></li>
 	<li class="<?php if ($group_title == 'paypal') { echo $class; } ?>"><a href ='<?php echo base_url(); ?>systems/configuration/paypal'>Paypal</a></li>
+    <li class="<?php if ($group_title == 'mpay24') { echo $class; } ?>"><a href ='<?php echo base_url(); ?>systems/configuration/mpay24'>mPay24</a></li>
 	<li class="<?php if ($group_title == 'signup') { echo $class; } ?>"><a href ='<?php echo base_url(); ?>systems/configuration/signup'>Signup</a></li>
                </ul>
                
