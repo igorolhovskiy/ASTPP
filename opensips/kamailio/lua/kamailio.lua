@@ -19,11 +19,18 @@ FLT_ACCMISSED = 2
 FLT_ACCFAILED = 3
 FLT_NATS = 5
 
+FLT_DISPATCH = 11
+
 FLB_NATB = 6
 FLB_NATSIPPING = 7
 
-ASTPP_ADDR = 'XXX.XXX.XXX.XXX'
+ASTPP_ADDR = {"X.X.X.X", "Y.Y.Y.Y"}
 ASTPP_PORT = '5060'
+
+DISPATCHER_ALG = 4 -- round-robin. See https://kamailio.org/docs/modules/devel/modules/dispatcher.html#dispatcher.f.ds_select_dst
+DISPATCHER_SET = 1
+
+IS_LOG = true
 
 -- SIP request routing
 -- equivalent of request_route{}
@@ -31,6 +38,7 @@ function ksr_request_route()
 
     -- Some initial vars to populate
     local packet_info = populate_vars()
+    log("[MAIN_ROUTE] Start", packet_info)    
 
     -- Check for spam
 
@@ -59,14 +67,14 @@ function ksr_request_route()
     -- -- only initial requests (no To tag)
 
     -- handle retransmissions
-    if KSR.tmx.t_precheck_trans()>0 then
+    if KSR.tmx.t_precheck_trans() > 0 then
         KSR.tm.t_check_trans();
         return 1;
     end
-    if KSR.tm.t_check_trans()==0 then return 1 end
+    if KSR.tm.t_check_trans() == 0 then return 1 end
 
     -- authentication
-    if (packet_info['source-ip'] ~= ASTPP_ADDR) then
+    if not is_from_astpp(packet_info) then
         ksr_route_auth(packet_info)
     end
 
@@ -97,8 +105,16 @@ function ksr_request_route()
     end
 
     -- Send calls to ASTPP
-    if (packet_info['source-ip'] ~= ASTPP_ADDR) then
-        KSR.pv.sets("$du", "sip:" .. ASTPP_ADDR.. ":" .. ASTPP_PORT)
+    if not is_from_astpp(packet_info) then
+        log("[MAIN ROUTE] Not from ASTPP", packet_info)
+        if KSR.dispatcher.ds_select_domain(DISPATCHER_SET, DISPATCHER_ALG) ~= -1 then
+            KSR.setflag(FLT_DISPATCH)
+            log("[MAIN ROUTE][DISPATCH] DS_SELECT worked. DU: " .. get_variable("$du"), packet_info)
+        else
+            -- Use defaut destination
+            KSR.pv.sets("$du", "sip:" .. ASTPP_ADDR[1].. ":" .. ASTPP_PORT)
+            log("[MAIN ROUTE][DISPATCH] Default worked. DU: " .. get_variable("$du"), packet_info)
+        end
         KSR.hdr.append("X-AUTH-IP: " .. packet_info['source-ip'] .. "\r\n")
         ksr_route_relay(packet_info)
     else
@@ -122,13 +138,13 @@ function ksr_route_relay(packet_info)
     end
     if string.find("INVITE,SUBSCRIBE,UPDATE", packet_info['method']) then
         if KSR.tm.t_is_set("onreply_route") < 0 then
-            KSR.tm.t_on_reply("ksr_onreply_manage");
+            KSR.tm.t_on_reply("ksr_onreply_manage")
         end
     end
 
     if packet_info['method'] == "INVITE" then
         if KSR.tm.t_is_set("failure_route") < 0 then
-            KSR.tm.t_on_failure("ksr_failure_manage");
+            KSR.tm.t_on_failure("ksr_failure_manage")
         end
     end
 
@@ -146,33 +162,33 @@ function ksr_route_reqinit(packet_info)
             -- ip is already blocked
             KSR.dbg("request from blocked IP - " .. packet_info['method']
                     .. " from " .. packet_info['from-uri'] .. " (IP:"
-                    .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .. ")\n");
+                    .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .. ")\n")
             KSR.x.exit();
         end
         if KSR.pike.pike_check_req()<0 then
             KSR.err("ALERT: pike blocking " .. packet_info['method']
                     .. " from " .. packet_info['from-uri'] .. " (IP:"
-                    .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .. ")\n");
+                    .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .. ")\n")
             KSR.pv.seti("$sht(ipban=>$si)", 1);
             KSR.x.exit();
         end
     end
 
     if KSR.maxfwd.process_maxfwd(10) < 0 then
-        KSR.sl.sl_send_reply(483,"Too Many Hops");
-        KSR.x.exit();
+        KSR.sl.sl_send_reply(483, "Too Many Hops")
+        KSR.x.exit()
     end
 
     if packet_info['method'] == "OPTIONS"
             and KSR.is_myself(packet_info['request-uri'])
             and KSR.pv.is_null("$rU") then
-        KSR.sl.sl_send_reply(200,"Keepalive");
-        KSR.x.exit();
+        KSR.sl.sl_send_reply(200, "Keepalive")
+        KSR.x.exit()
     end
 
-    if KSR.sanity.sanity_check(1511, 7)<0 then
+    if KSR.sanity.sanity_check(1511, 7) < 0 then
         KSR.err("Malformed SIP message from "
-                .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .."\n");
+                .. packet_info['source-ip'] .. ":" .. packet_info['source-port'] .."\n")
         KSR.x.exit();
     end
 
@@ -238,21 +254,21 @@ end
 
 -- User location service
 function ksr_route_location(packet_info)
-    local rc = KSR.registrar.lookup("location");
+    local rc = KSR.registrar.lookup("location")
     if rc < 0 then
-        KSR.tm.t_newtran();
+        KSR.tm.t_newtran()
         if rc==-1 or rc==-3 then
-            KSR.sl.send_reply("404", "Not Found");
-            KSR.x.exit();
+            KSR.sl.send_reply("404", "Not Found")
+            KSR.x.exit()
         elseif rc==-2 then
-            KSR.sl.send_reply("405", "Method Not Allowed");
-            KSR.x.exit();
+            KSR.sl.send_reply("405", "Method Not Allowed")
+            KSR.x.exit()
         end
     end
 
     -- when routing via usrloc, log the missed calls also
     if packet_info['method'] == "INVITE" then
-        KSR.setflag(FLT_ACCMISSED);
+        KSR.setflag(FLT_ACCMISSED)
     end
 
     ksr_route_relay(packet_info)
@@ -289,7 +305,7 @@ function ksr_route_auth(packet_info)
                 -- Our result should be at 0, 0 position if any
                 for i = 0, 3 do
                     if KSR.sqlops.sql_is_null("sql_res", 0, i) ~= 1 then
-                        account_info[i] = KSR.pv.get("$dbr(sql_res=>[0, ".. i .. "])")
+                        account_info[i] = get_variable("$dbr(sql_res=>[0, ".. i .. "])")
                     else 
                         account_info[i] = ""
                     end
@@ -316,7 +332,7 @@ function ksr_route_auth(packet_info)
     -- a local destination, otherwise deny, not an open relay here
     if (not KSR.is_myself(packet_info['from-uri'])
             and (not KSR.is_myself(packet_info['request-uri']))) then
-        KSR.sl.sl_send_reply(403,"Not relaying");
+        KSR.sl.sl_send_reply(403, "Not relaying")
         KSR.x.exit();
     end
 
@@ -327,12 +343,12 @@ end
 function ksr_route_natdetect(packet_info)
 
     KSR.force_rport()
-    if KSR.nathelper.nat_uac_test(23)>0 then
+    if KSR.nathelper.nat_uac_test(23) > 0 then
         KSR.nathelper.fix_nated_contact()
 
-        if KSR.pv.get("$rm")=="REGISTER" then
+        if packet_info['method'] == "REGISTER" then
             KSR.nathelper.fix_nated_register()
-        elseif KSR.siputils.is_first_hop()>0 then
+        elseif KSR.siputils.is_first_hop() > 0 then
             KSR.nathelper.set_contact_alias()
         end
 
@@ -343,46 +359,49 @@ end
 
 -- RTPEngine control
 function ksr_route_natmanage(packet_info)
-    if KSR.siputils.is_request()>0 then
-        if KSR.siputils.has_totag()>0 then
-            if KSR.rr.check_route_param("nat=yes")>0 then
-                KSR.setbflag(FLB_NATB);
+    log("[NAT MANAGE] Start")
+    if KSR.siputils.is_request() > 0 then
+        if KSR.siputils.has_totag() > 0 then
+            if KSR.rr.check_route_param("nat=yes") > 0 then
+                KSR.setbflag(FLB_NATB)
             end
         end
     end
     if (not (KSR.isflagset(FLT_NATS) or KSR.isbflagset(FLB_NATB))) then
-        return 1;
+        return 1
     end
+    
+    log("[NAT MANAGE] RTPEngine")
+    KSR.rtpengine.rtpengine_manage("replace-origin replace-session-connection symmetric")
 
-    --KSR.rtpengine.rtpengine_manage("replace-origin replace-session-connection");
-
-    if KSR.siputils.is_request()>0 then
+    if KSR.siputils.is_request() > 0 then
         if not KSR.siputils.has_totag() then
-            if KSR.tmx.t_is_branch_route()>0 then
-                KSR.rr.add_rr_param(";nat=yes");
+            if KSR.tmx.t_is_branch_route() > 0 then
+                KSR.rr.add_rr_param(";nat=yes")
             end
         end
     end
-    if KSR.siputils.is_reply()>0 then
+    if KSR.siputils.is_reply() > 0 then
         if KSR.isbflagset(FLB_NATB) then
-            KSR.nathelper.set_contact_alias();
+            KSR.nathelper.set_contact_alias()
         end
     end
-    return 1;
+    return 1
 end
 
 -- URI update for dialog requests
 function ksr_route_dlguri()
     if not KSR.isdsturiset() then
-        KSR.nathelper.handle_ruri_alias();
+        KSR.nathelper.handle_ruri_alias()
     end
-    return 1;
+    return 1
 end
 
 -- Manage outgoing branches
 -- equivalent of branch_route[...]{}
 function ksr_branch_manage()
     local packet_info = populate_vars()
+    log("[BRANCH ROUTE]", packet_info)    
     ksr_route_natmanage(populate_vars)
     return 1
 end
@@ -392,12 +411,12 @@ end
 function ksr_onreply_manage()
 
     local packet_info = populate_vars()
-    KSR.dbg("incoming reply\n");
-    packet_info['reply-code'] = KSR.pv.get("$rs");
+    log("[REPLY ROUTE]", packet_info)
+    packet_info['reply-code'] = get_variable("$rs")
     if packet_info['reply-code'] > 100 and packet_info['reply-code'] < 299 then
-        ksr_route_natmanage(packet_info);
+        ksr_route_natmanage(packet_info)
     end
-    return 1;
+    return 1
 end
 
 -- Manage failure routing cases
@@ -406,11 +425,20 @@ function ksr_failure_manage()
 
     local packet_info = populate_vars()
     ksr_route_natmanage(packet_info)
+    packet_info['reply-code'] = get_variable("$rs")
 
-    if KSR.tm.t_is_canceled()>0 then
-        return 1;
+    if KSR.isflagset(FLT_DISPATCH) and (packet_info['reply-code'] == 408 or packet_info['reply-code'] > 500) then
+        KSR.resetflag(FLT_DISPATCH) -- No run into loops. But only 2 dest is probed here.
+        if KSR.dispatcher.ds_next_dst() == -1 then
+            KSR.pv.sets("$du", "sip:" .. ASTPP_ADDR[1].. ":" .. ASTPP_PORT)
+        end
+        ksr_route_relay(packet_info)
     end
-    return 1;
+
+    if KSR.tm.t_is_canceled() > 0 then
+        return 1
+    end
+    return 1
 end
 
 -- SIP response handling
@@ -430,15 +458,15 @@ function spam_check(packet_info)
 
     local spam_pattern = {"friendly-scanner", "sipvicious", "sipcli", "vaxasip", "sip-scan", "iWar", "sipsak"}
     
-    if packet_info['user-agent'] and find_in_pattern(packet_info['user-agent'], spam_pattern) then
+    if #packet_info['user-agent'] ~= 0 and find_in_pattern(packet_info['user-agent'], spam_pattern) then
         KSR.info("[SPAM_CHECK] Spam found for user agent: "..packet_info['user-agent'])        
         return true
     end
 
     
-    if (packet_info['body'] and KSR.textops.has_body_type("application/sdp") ~= -1) then
+    if #packet_info['body'] ~= 0 and KSR.textops.has_body_type("application/sdp") ~= -1 then
         if find_in_pattern(packet_info['body'], spam_pattern) then
-            KSR.info("[SPAM_CHECK] Spam found for body: " .. packet_info['body'])   
+            log("[SPAM_CHECK] Spam found for body: " .. packet_info['body'])   
             return true
         end
     end
@@ -466,18 +494,38 @@ end
 function populate_vars()
     local packet = {}
 
-    packet['method'] = KSR.pv.get("$rm")
-    packet['user-agent'] = KSR.pv.get("$ua")
-    packet['from-uri'] = KSR.pv.get("$fu")
-    packet['from-domain'] = KSR.pv.get("$fd")
-    packet['from-username'] = KSR.pv.get("$fU")
-    packet['contact'] = KSR.pv.get("$ct") or ""
-    packet['user-agent'] = (not KSR.pv.is_null("$ua")) and KSR.pv.get("$ua") or nil
-    packet['source-ip'] = KSR.pv.get("$si")
-    packet['source-port'] = KSR.pv.get("$sp")
-    packet['request-uri'] = KSR.pv.get("$ru")
-    packet['request-uri-username'] = KSR.pv.get("$rU")
-    packet['body'] = (not KSR.pv.is_null("$rb")) and KSR.pv.get("$rb") or nil
+    packet['method']                = get_variable("$rm")
+    packet['user-agent']            = get_variable("$ua")
+    packet['from-uri']              = get_variable("$fu")
+    packet['from-domain']           = get_variable("$fd")
+    packet['from-username']         = get_variable("$fU")
+    packet['contact']               = get_variable("$ct")
+    packet['to-uri']                = get_variable("$tu")
+    packet['user-agent']            = get_variable("$ua")
+    packet['source-ip']             = get_variable("$si")
+    packet['source-port']           = get_variable("$sp")
+    packet['request-uri']           = get_variable("$ru")
+    packet['request-uri-username']  = get_variable("$rU")
+    packet['body']                  = get_variable("$rb")
 
     return packet
+end
+
+function is_from_astpp(packet_info)
+    -- return find_in_pattern(packet_info['source-ip'], ASTPP_ADDR)
+    return KSR.dispatcher.ds_is_from_list_mode(1, 1) ~= -1
+end
+
+function log(string, packet_info)
+    if IS_LOG then
+        local print_string = string
+        if packet_info ~= nil then
+            print_string = packet_info['method'] .. " R: " .. packet_info['request-uri'] .. " F: " .. packet_info['from-uri'] .. " T: " .. packet_info['to-uri'] .. " -> " .. string
+        end
+        KSR.info(tostring(print_string))
+    end
+end
+
+function get_variable(var) 
+    return KSR.pv.get(var) or ""
 end
