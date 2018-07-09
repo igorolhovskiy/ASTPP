@@ -26,6 +26,16 @@ use Mpay24\Mpay24;
 use Mpay24\Mpay24Order; //if you are using paymentPage
 use Mpay24\Mpay24Config;
 
+spl_autoload_register(function ($class) {
+    if (strpos($class, 'Sofort\\') === 0) {
+        $fileName = APPPATH . 'libraries/sofortlib-php/src/' . strtr($class, '\\', '/') . '.php';
+        if (file_exists($fileName)) {
+            require_once $fileName;
+        }
+    }
+});
+use Sofort\SofortLib\Sofortueberweisung;
+
 class Payment extends MX_Controller {
 
   function Payment() {
@@ -54,6 +64,7 @@ class Payment extends MX_Controller {
 	   $data["paypal_tax"] = $system_config["paypal_tax"];
 
 	   $data["mpay24_status"] = $system_config["mpay24_status"];
+       $data["sofort_status"] = $system_config["sofort_status"];
 
 	   $data["from_currency"] = $this->common->get_field_name('currency', 'currency', $account_data["currency_id"]);
 	   $data["to_currency"] = Common_model::$global_config['system_config']['base_currency'];
@@ -102,12 +113,48 @@ class Payment extends MX_Controller {
 	}
   }
 
+  function sofort() {
+      if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $this->session->userdata('user_login') == FALSE) {
+          redirect(base_url() . 'user');
+      }
+
+      $system_config = common_model::$global_config['system_config'];
+
+      $Sofortueberweisung = new Sofortueberweisung($system_config['sofort_configuration_key']);
+      $amount = $this->input->post('amount');
+      $Sofortueberweisung->setAmount($amount);
+      $Sofortueberweisung->setCurrencyCode('EUR');
+      $receipt_id = $this->getReceiptId($amount, 'Sofort');
+      $invoice_prefix= $entity_type =$this->common->get_field_name('invoice_prefix','invoices',array('id' => $receipt_id));
+
+      $invoiceid= $this->common->get_field_name('invoiceid','invoices',array('id'=> $receipt_id));
+      $invoice_num = $invoice_prefix.$invoiceid;
+
+      $Sofortueberweisung->setReason('Account Recharge', $invoice_num);
+      // $Sofortueberweisung->setReason('sofort.com - Test', '6601eaa9bc');
+      // $Sofortueberweisung->setSenderSepaAccount('SFRTDE20XXX', 'DE06000000000023456789', 'Max Mustermann');
+      $Sofortueberweisung->setSuccessUrl(base_url() . "login/sofort_success_response?invoice_id=$receipt_id&transaction=-TRANSACTION-", true);
+      $Sofortueberweisung->setAbortUrl(base_url() . "login/sofort_error_response?invoice_id=$receipt_id&transaction=-TRANSACTION-");
+      $Sofortueberweisung->sendRequest();
+
+      if($Sofortueberweisung->isError()) {
+          // SOFORT-API didn't accept the data
+          echo $Sofortueberweisung->getError();
+      } else {
+          // get unique transaction-ID useful for check payment status
+          $transactionId = $Sofortueberweisung->getTransactionId();
+          // buyer must be redirected to $paymentUrl else payment cannot be successfully completed!
+          $paymentUrl = $Sofortueberweisung->getPaymentUrl();
+          header('Location: '.$paymentUrl);
+      }
+  }
+
   function convert_amount($amount){
 	   $amount = $this->common_model->add_calculate_currency($amount,"","",true,false);
 	   echo number_format((float)$amount,2);
   }
 
-  function getReceiptId($amount) {
+  function getReceiptId($amount, $payment_system = 'mPay24') {
 	  $account_data = $this->session->userdata("accountinfo");
 	  $reseller_id=$account_data['reseller_id'] > 0 ? $account_data['reseller_id'] : 0;
 	  $where="accountid IN ('".$reseller_id."','1')";
@@ -129,7 +176,7 @@ class Payment extends MX_Controller {
 		  'accountid'=>$account_data["id"],
 		  'reseller_id'=>$account_data['reseller_id'],
 		  'invoiceid'=>$invoice_id,
-		  'description'=>"Payment Made by mPay24 on date:-".$date,
+		  'description'=>"Payment Made by $payment_system on date: ".$date,
 		  'item_type'=>'PAYMENT'
 	  );
 	  $this->db->insert("invoice_details", $details_insert);

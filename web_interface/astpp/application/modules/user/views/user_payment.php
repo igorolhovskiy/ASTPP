@@ -49,6 +49,8 @@ body{
             $("#payment_form").attr('action', '<?php echo $paypal_url;?>');
           } else if (paymentSystem === 'mpay24') {
             $("#payment_form").attr('action', '<?php echo base_url(); ?>user/payment/mpay24');
+          } else if (paymentSystem === 'sofort') {
+              $("#payment_form").attr('action', '<?php echo base_url(); ?>user/payment/sofort');
           }
         });
     });
@@ -130,7 +132,7 @@ return false;
                                   <input type="hidden" readonly name="custom" id='custom' value="">
                                 </div>
 
-                                <div class='col-md-12' align="center">
+                                <div class='col-md-12' align="left">
                                     <div class="radio">
                                         <label>
                                             <input type="radio" name="paymentSystem" id="paypalOption" value="paypal" checked>
@@ -138,12 +140,20 @@ return false;
                                         </label>
                                     </div>
                                     <?php if($mpay24_status === '0') { ?>
-                                    <div class="radio">
-                                        <label>
-                                            <input type="radio" name="paymentSystem" id="mpay24Option" value="mpay24">
-                                            <img src="<?php echo base_url(); ?>/assets/images/payment-mpay24.svg" alt="mpay24">
-                                        </label>
-                                    </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="paymentSystem" id="mpay24Option" value="mpay24">
+                                                <img src="<?php echo base_url(); ?>/assets/images/payment-mpay24.svg" alt="mpay24">
+                                            </label>
+                                        </div>
+                                    <?php } ?>
+                                    <?php if($sofort_status === '0') { ?>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" name="paymentSystem" id="sofortOption" value="sofort">
+                                                <img src="https://cdn.klarna.com/1.0/shared/image/generic/badge/de_de/pay_now/descriptive/pink.svg" alt="sofort">
+                                            </label>
+                                        </div>
                                     <?php } ?>
                                 </div>
 

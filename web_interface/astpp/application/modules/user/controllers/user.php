@@ -1545,7 +1545,10 @@ class User extends MX_Controller {
 		ini_set('display_startup_errors', 1);
 		error_reporting(E_ALL);
 
-	  if(common_model::$global_config['system_config']['paypal_status'] == 1){
+	  if( common_model::$global_config['system_config']['paypal_status'] == 1
+		  && common_model::$global_config['system_config']['mpay24_status'] == 1
+		  && common_model::$global_config['system_config']['sofort_status'] == 1 ) {
+
 		redirect(base_url() . 'user/user/');  
 	  }
 		$this->load->module("user/payment");

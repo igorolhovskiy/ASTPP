@@ -376,6 +376,66 @@ class Login extends MX_Controller {
         redirect(base_url() . 'user/user/');
     }
 
+    function sofort_success_response() {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+        if(count($_GET)>0)
+        {
+            $response_arr = $_GET;
+            $this->saveResponseToFile($_GET, "/var/log/astpp/astpp_sofort_success.log");
+
+            $invoice_id = $response_arr['invoice_id'];
+            $this->db->where('id', $invoice_id);
+            $invoice_data = (array)$this->db->get('invoices')->first_row();
+            if (!empty($invoice_data)) {
+                $account_data = (array)$this->db->get_where("accounts", array("id" => $invoice_data["accountid"]))->first_row();
+                $currency = (array)$this->db->get_where('currency', array("id"=>$account_data["currency_id"]))->first_row();
+
+                $amount = floatval($invoice_data['amount']);
+
+                $this->savePayment($account_data, $amount, $currency, $response_arr, 'Sofort');
+
+                $this->db->where('id', $invoice_id);
+                $this->db->update('invoices', array(
+                        'confirm' => 1
+                    )
+                );
+                $this->db->where('invoiceid', $invoice_id);
+                $this->db->update('invoice_details', array(
+                        'before_balance' => $account_data['balance'],
+                        'after_balance' => $account_data['balance'] + $amount
+                    )
+                );
+                $this->db_model->update_balance($amount,$account_data["id"],"credit");
+            }
+            echo 'OK';
+            $this->session->set_flashdata('astpp_errormsg', 'Transaction is successfull!');
+        }
+        redirect(base_url() . 'user/user/');
+    }
+
+    function sofort_error_response() {
+        if(count($_GET)>0)
+        {
+            $this->saveResponseToFile($_GET, "/var/log/astpp/astpp_sofort_error.log");
+
+            return;
+
+            $invoice_id = $_GET['invoice_id'];
+            if (!empty($invoice_id)) {
+                $this->db->where('id', $invoice_id);
+                $this->db->update('invoices', array(
+                        'deleted' => 1
+                    )
+                );
+            }
+            $this->session->set_flashdata('astpp_notification', 'Sorry, your transaction is denied.');
+            echo 'OK';
+        }
+        redirect(base_url() . 'user/user/');
+    }
+
     private function savePayment($account_data, $amount, $currency, $response_arr, $paymentSystemName) {
         $date = date('Y-m-d H:i:s');
 		$payment_trans_array = array("accountid"=>$account_data['id'],
@@ -392,7 +452,7 @@ class Login extends MX_Controller {
 		$payment_arr = array("accountid"=> $account_data['id'],
 			"payment_mode"=>"1",
 			"credit"=>$amount,
-			"type"=>"mPay24",
+			"type"=> $paymentSystemName,
 			"payment_by"=>$parent_id,
 			"notes"=>"Payment Made by $paymentSystemName on date: ".$date,
 			'payment_date'=> $date);
