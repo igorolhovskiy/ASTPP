@@ -249,8 +249,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
 		end
 	elseif(tonumber(didinfo['call_type']) == 2 and didinfo['extensions'] ~= '') then
 		table.insert(xml, [[<action application="set" data="calltype=OTHER"/>]])
-		local didinfo_extensions = didinfo['extensions']
-		if string:find(didinfo_extensions, "sofia/") then
+		if string.find(didinfo['extensions'], "sofia/") then
 			table.insert(xml, [[<action application="bridge" data="]]..didinfo['extensions']..[["/>]])
 		else
 			table.insert(xml, [[<action application="bridge" data=sofia/default/"]]..didinfo['extensions']..[["/>]])
