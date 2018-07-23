@@ -428,3 +428,32 @@ UPDATE userlevels SET module_permissions = '1,2,4,5,3,8,9,13,14,15,16,17,18,19,2
 INSERT INTO invoice_templates SELECT '' AS id, 'R' AS type, 'default' AS name, subject, head_template,
   page1_template, '' AS page2_template, footer_template,last_modified_date FROM invoice_templates WHERE name = 'default';
 ALTER TABLE accounts ADD COLUMN receipt_template_id int(11) DEFAULT 5 AFTER invoice_template_id;
+
+-- mpay24
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('mpay24_status', 'Mpay24', '0', 'enable_disable_option', 'Set enable to add paypal as payment gateway option',
+  NULL, 0, 0, 'mpay24');
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('mpay24_mode', 'Mpay24 Mode', '1', 'mpay24_mode', 'Set mpay24 mode. Sandbox for testing',
+  NULL, 0, 0, 'mpay24');
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('mpay24_merchant_id', 'Mpay24 Merchant ID', '', 'default_system_input', 'Set mpay24 merchant ID',
+  NULL, 0, 0, 'mpay24');
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('mpay24_soap_password', 'Mpay24 Soap password', '', 'default_system_input', 'Set mpay24 Soap password',
+  NULL, 0, 0, 'mpay24');
+
+
+-- Sofort
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('sofort_status', 'Sofort', '0', 'enable_disable_option', 'Set enable to add paypal as payment gateway option',
+  NULL, 0, 0, 'sofort');
+INSERT INTO system
+( name, display_name, value, field_type, comment, timestamp, reseller_id, brand_id, group_title) VALUES
+('sofort_configuration_key', 'Sofort Configuration key', '', 'default_system_input', 'Set Sofort Configuration key',
+  NULL, 0, 0, 'sofort');
