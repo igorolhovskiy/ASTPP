@@ -223,7 +223,7 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates)
             freeswitch_xml_forward_to_pstn(xml, didinfo['account_code'], userinfo['id'], xml_did_rates, "${forward_to}")
 			table.insert(xml, [[</condition>]])
 			-- Set No Answer time to 20 sec (Hardcoded, need to review)
-			table.insert(xml, [[<condition field="${sip_forward_type}" expression="^No Answer$">]])
+			table.insert(xml, [[<condition field="${sip_forward_type}" expression="^No Answer$" break="never">]])
             table.insert(xml, [[<action application="set" data="call_timeout=20"/>]])            
             table.insert(xml, [[</condition>]])
             -- Actual call to user
