@@ -1170,6 +1170,9 @@ class common {
 				$to_currency = $this->CI->common->get_field_name('currency', 'currency', $accountinfo['currency_id']);
 				$balance = $this->CI->common_model->calculate_currency($accountinfo['balance'], "", $to_currency, true, true);
 				$message = str_replace('#BALANCE#', $accountinfo['balance'], $message);
+				if ($accountinfo['notify_email']) {
+                    $useremail = $accountinfo['notify_email'];
+                }
 				break;
 			case 'email_new_invoice';
 				$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);

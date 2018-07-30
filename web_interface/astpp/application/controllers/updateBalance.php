@@ -257,11 +257,14 @@ class UpdateBalance extends MX_Controller {
         } else {
             $Bal = ($AccountData["credit_limit"] - $AccountData["balance"]);
         }
+        /*
+         * Remove deactivate clients if balance is zero.
         if ($Bal <= 0) {
             $this->db->set('status', "1", FALSE);
             $this->db->where('id', $AccountData["id"]);
             $this->db->update("accounts");
         }
+        */
         $invoice_item_arr = array("accountid" => $AccountData["id"],
             "reseller_id" => $AccountData["reseller_id"],
             "description" => trim($description."-".$fromdate." to ".$todate),

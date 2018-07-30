@@ -132,11 +132,17 @@ class Accounts_form {
 			array(gettext('Packages'), 'packages_id', 'SELECT', '', '', 'tOOL TIP', 'Please Enter account number', 'id', 'package_name', 'packages', 'build_dropdown', 'where_arr', '', 'multi'),
 		);
 	if($id==0){
+		// get data from invoice_conf
+        $query = $this->CI->db_model->getSelect("*", "invoice_conf",array("accountid"=> 1));
+        $invoice_conf = $query->result_array();
+        $invoice_conf = $invoice_conf[0];
+        $notify_email = $invoice_conf['emailaddress'];
+
 	  $form[gettext('Alert Threshold')] = array(
 			array('', 'HIDDEN', array('name' => 'id'), '', '', '', ''),
 			array(gettext('Email Alerts ?'), 'notify_flag', 'SELECT', '', '', 'tOOL TIP', '', '', '', '', 'custom_status'),
 			array(gettext('Balance Below'), 'INPUT', array('name' => 'notify_credit_limit', 'size' => '20',  'class' => "text field medium"), 'valid_decimal', 'tOOL TIP', ''),
-			array(gettext('Email'), 'INPUT', array('name' => 'notify_email', 'size' => '50',  'class' => "text field medium"), 'valid_email', 'tOOL TIP', ''),
+			array(gettext('Email'), 'INPUT', array('name' => 'notify_email', 'value' => $notify_email, 'size' => '50',  'class' => "text field medium"), 'valid_email', 'tOOL TIP', ''),
 	  );
 	}
 		$form['button_save'] = array('name' => 'action', 'content' => gettext('Save'), 'value' => 'save', 'type' => 'submit', 'class' => 'btn btn-line-parrot');
