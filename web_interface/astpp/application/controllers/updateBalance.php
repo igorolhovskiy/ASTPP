@@ -260,7 +260,9 @@ class UpdateBalance extends MX_Controller {
         /*
          * Remove deactivate clients if balance is zero.
         if ($Bal <= 0) {
-            $this->db->set('status', "1", FALSE);
+
+            // Disable turning off account if negative balance
+            //$this->db->set('status', "1", FALSE);
             $this->db->where('id', $AccountData["id"]);
             $this->db->update("accounts");
         }
