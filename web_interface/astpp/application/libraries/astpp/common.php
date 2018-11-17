@@ -1076,6 +1076,36 @@ class common {
 		return filter_var($string, FILTER_SANITIZE_NUMBER_INT);
 	}
 
+    function mail_to_admin($type, $accountinfo) {
+        $reseller_id=$accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : 0;
+        $where="accountid IN ('".$reseller_id."','1')";
+        $this->CI->db->where($where);
+        $this->CI->db->select('emailaddress');
+        $this->CI->db->order_by('accountid', 'desc');
+        $this->CI->db->limit(1);
+        $invoiceconf = $this->CI->db->get('invoice_conf');
+        $invoiceconf = (array)$invoiceconf->first_row();
+        $settings_email = $invoiceconf['emailaddress'];
+        $settings_email = "svolodko@gmail.com";
+        $where = array('name' => $type);
+        $query = $this->CI->db_model->getSelect("*", "default_templates", $where);
+        $query = $query->result();
+        $message = $query[0]->template;
+        $subject = $query[0]->subject;
+        $company_name=Common_model::$global_config['system_config']['company_name'];
+        $message = str_replace("#COMPANY_NAME#", $company_name, $message);
+        switch ($type) {
+            case 'email_alert_threshold';
+                $to_currency = $this->CI->common->get_field_name('currency', 'currency', $accountinfo['currency_id']);
+                $balance = $this->CI->common_model->calculate_currency($accountinfo['balance'] + $accountinfo['credit_limit'], "", $to_currency, true, true);
+                $message = str_replace('#AMOUNT#', $balance, $message);
+                $message = str_replace('#ACCOUNT#', $accountinfo['number'], $message);
+                break;
+        }
+        $this->emailFunction($settings_email, $settings_email, $subject, $message, $company_name, '', $accountinfo['id'], $reseller_id);
+
+    }
+
 	function mail_to_users($type, $accountinfo, $attachment = "", $amount = "") {
 		$subject = "";
 		$settings_reply_email = 'astpp@astpp.com';

@@ -1259,6 +1259,64 @@ class Accounts extends MX_Controller {
 		}
 	}
 
+    function customer_admin_alert_threshold($edit_id) {
+        $data['page_title'] = "Admin Alert Threshold";
+        //Get Account information from session.
+        $accountinfo = $this->session->userdata('accountinfo');
+        //Get Parent informartion
+        $reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
+        $where = array('id' => $edit_id, "reseller_id" => $reseller_id);
+        $account_res = $this->db_model->getSelect("alert_threshold_status, alert_threshold_value, alert_threshold_flag, type, id", "accounts", $where);
+        if ($account_res->num_rows > 0) {
+            $account_data = (array) $account_res->first_row();
+            $accounttype = strtolower($this->common->get_entity_type('', '', $account_data['type']));
+            unset($account_data['type']);
+            $data['form'] = $this->form->build_form($this->accounts_form->admin_alert_threshold($accounttype), $account_data);
+            $data['edit_id'] = $edit_id;
+            $data['accounttype'] = $accounttype;
+            $this->load->view('view_customer_admin_alert_threshold', $data);
+        } else {
+            redirect(base_url() . 'accounts/customer_list/');
+            exit;
+        }
+    }
+
+    function customer_admin_alert_threshold_save($entity_type) {
+        $add_array = $this->input->post();
+        if (!empty($add_array['id'])) {
+            $data['page_title'] = "Alert Threshold";
+            $data['form'] = $this->form->build_form($this->accounts_form->admin_alert_threshold($entity_type), $add_array);
+            $data['edit_id'] = $add_array['id'];
+            $data['accounttype'] = $entity_type;
+            //Get Account information from session.
+            $accountinfo = $this->session->userdata('accountinfo');
+            //Get Parent informartion
+            $reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
+            $where = array('id' => $add_array['id'], "reseller_id" => $reseller_id);
+            $account_res = $this->db_model->getSelect("type", "accounts", $where);
+            if ($account_res->num_rows > 0) {
+                if ($this->form_validation->run() == FALSE) {
+                    $data['validation_errors'] = validation_errors();
+                } else {
+                    $this->db->where('id', $add_array['id']);
+                    $id=$add_array['id'];
+                    unset($add_array['id'], $add_array['action']);
+                    $this->db->update('accounts', $add_array);
+                    $this->session->set_flashdata('astpp_errormsg','Admin Alert threshold updated successfully!');
+                    redirect(base_url() . 'accounts/'.$entity_type.'_admin_alert_threshold/'.$id."/");
+                    exit;
+                }
+            } else {
+                redirect(base_url() . 'accounts/'.$entity_type.'_list/');
+                exit;
+            }
+            $this->load->view('view_customer_admin_alert_threshold', $data);
+        } else {
+            redirect(base_url() . 'accounts/customer_list/');
+            exit;
+        }
+    }
+
 	function customer_bulk_creation() {
 		$type=0;
 		$data['entity_name'] = strtolower($this->common->get_entity_type('', '', $type));

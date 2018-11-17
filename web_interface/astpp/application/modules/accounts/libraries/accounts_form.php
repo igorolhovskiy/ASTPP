@@ -165,6 +165,17 @@ class Accounts_form {
 		return $form;
 	}
 
+    function admin_alert_threshold($entity_type) {
+        $form['forms'] = array(base_url() . 'accounts/' . $entity_type . '_admin_alert_threshold_save/' . $entity_type . "/", array("id" => "admin_alert_threshold", "name" => "admin_alert_threshold"));
+        $form[gettext('Alert Threshold')] = array(
+            array('', 'HIDDEN', array('name' => 'id'), '', '', '', ''),
+            array(gettext('Email Alerts ?'), 'alert_threshold_status', 'SELECT', '', '', 'tOOL TIP', '', '', '', '', 'email'),
+            array(gettext('Balance + Credit Limit Below'), 'INPUT', array('name' => 'alert_threshold_value', 'size' => '20',  'class' => "text field medium"), 'valid_decimal', 'tOOL TIP', ''),
+        );
+        $form['button_save'] = array('name' => 'action', 'content' => gettext('Save'), 'value' => 'save', 'type' => 'submit', 'class' => 'btn btn-line-parrot');
+        return $form;
+    }
+
 	function customer_bulk_generate_form() {
 		$logintype = $this->CI->session->userdata('logintype');
 		$sip_device = null;
