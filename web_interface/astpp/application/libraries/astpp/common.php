@@ -1086,7 +1086,6 @@ class common {
         $invoiceconf = $this->CI->db->get('invoice_conf');
         $invoiceconf = (array)$invoiceconf->first_row();
         $settings_email = $invoiceconf['emailaddress'];
-        $settings_email = "svolodko@gmail.com";
         $where = array('name' => $type);
         $query = $this->CI->db_model->getSelect("*", "default_templates", $where);
         $query = $query->result();
