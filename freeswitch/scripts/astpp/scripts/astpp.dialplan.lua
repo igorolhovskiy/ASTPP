@@ -429,12 +429,12 @@ if (userinfo ~= nil) then
                         else
                             calleridinfo['cid_number'] = ''
                         end
-                        xml = freeswitch_xml_callerid(xml,calleridinfo)  
+                        xml = freeswitch_xml_callerid(xml, calleridinfo)  
                     end           
                 end
 
                 for carrier_arr_key,carrier_arr_array in pairs(carrier_array) do
-                    xml = freeswitch_xml_outbound(xml,destination_number,carrier_arr_array)
+                    xml = freeswitch_xml_outbound(xml,destination_number,carrier_arr_array, calleridinfo)
                 end
 
                 xml = freeswitch_xml_footer(xml)

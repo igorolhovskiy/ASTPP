@@ -45,11 +45,11 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
 	table.insert(xml, [[<action application="set" data="call_direction=]]..call_direction..[["/>]]); 	
 	table.insert(xml, [[<action application="set" data="accountname=]]..accountname..[["/>]]);
 
-	if (call_direction == "inbound" and tonumber(config['inbound_fax']) > 0) then
+	if (call_direction == "inbound" and tonumber(config['inbound_fax']) == 0) then
 		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
 		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
 		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
-	elseif (call_direction == "outbound" and tonumber(config['outbound_fax']) > 0) then
+	elseif (call_direction == "outbound" and tonumber(config['outbound_fax']) == 0) then
 		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
 		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
 		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
@@ -117,11 +117,21 @@ end
 
 
 -- Dialplan for outbound calls
-function freeswitch_xml_outbound(xml,destination_number,outbound_info)
+function freeswitch_xml_outbound(xml, destination_number, outbound_info, calleridinfo)
   	
     local temp_destination_number = destination_number
-	if (outbound_info['number_translation'] ~= '') then 
-		temp_destination_number = do_number_translation(outbound_info['dialed_modify'],destination_number)
+	if (outbound_info['number_translation'] ~= '') then
+
+		local number_translation = outbound_info['dialed_modify']
+		if number_translation:find("callback=") then
+			local callback_function_name = number_translation:gsub("callback=(%a+)", function(x) return x end)
+			-- Here we overriding whole XML to set correct callerID's, headers, etc
+			if (_G[callback_function_name] ~= nil) then
+				xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, calleridinfo)
+			end
+		else 
+			temp_destination_number = do_number_translation(outbound_info['dialed_modify'], temp_destination_number)
+		end
 	end
 
 	if(outbound_info['prepend'] ~= '' or outbound_info['strip'] ~= '') then
@@ -134,7 +144,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info)
             outbound_info['strip'] = '*'
         end
 
-		temp_destination_number = do_number_translation(outbound_info['strip'].."/"..outbound_info['prepend'],temp_destination_number)
+		temp_destination_number = do_number_translation(outbound_info['strip'].."/"..outbound_info['prepend'], temp_destination_number)
 	end
     
 	xml_termiantion_rates= "ID:"..outbound_info['outbound_route_id'].."|CODE:"..outbound_info['pattern'].."|DESTINATION:"..outbound_info['comment'].."|CONNECTIONCOST:"..outbound_info['connectcost'].."|INCLUDEDSECONDS:"..outbound_info['includedseconds'].."|COST:"..outbound_info['cost'].."|INC:"..outbound_info['inc'].."|INITIALBLOCK:"..outbound_info['init_inc'].."|TRUNK:"..outbound_info['trunk_id'].."|PROVIDER:"..outbound_info['provider_id'];
@@ -159,7 +169,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info)
 	----------------------- END Gateway configuraiton -------------------------------
 	-- Set force code if configured
 	if (outbound_info['codec'] ~= '') then 
-		table.insert(xml, [[<action application="set" data="absolute_codec_string=]]..outbound_info['codec']..[["/>]]);           
+		table.insert(xml, [[<action application="export" data="absolute_codec_string=]]..outbound_info['codec']..[["/>]]);           
 	end
 
 	if(tonumber(outbound_info['maxchannels']) > 0) then    

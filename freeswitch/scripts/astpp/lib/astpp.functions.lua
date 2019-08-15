@@ -238,7 +238,7 @@ end
 
 
 -- Do number translation 
-function do_number_translation(number_translation,destination_number)
+function do_number_translation(number_translation, destination_number)
     local tmp
 
     tmp = split(number_translation,",")
@@ -671,4 +671,10 @@ function var_dump(...)
     else
         Logger.debug("[VAR_DUMP]: "..recurse(args[1]))
     end
+end
+
+-- **** --- Custom callback functions for number_translation (callerID involved?)
+
+function neo_tel_number_normalization(xml, destination_number, calleridinfo)
+    return xml, destination_number
 end
