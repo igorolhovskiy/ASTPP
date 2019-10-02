@@ -387,6 +387,10 @@ if (userinfo ~= nil) then
 
                 xml = freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config)
 
+                -- Per convention
+                -- NAME - P-Preferred-Identify. Means what I want to show to network or 'Anon'/'restricted'
+                -- NUMBER - P-Asserted-Identify - What is real number
+                calleridinfo = {}
                 calleridinfo = get_override_callerid(customer_userinfo)
                 calleridinfo = normalize_callerid_ani(calleridinfo)
 
@@ -398,7 +402,7 @@ if (userinfo ~= nil) then
                     callerid_astpp_headers['outbound'] = outbound_caller_id
                     callerid_astpp_headers['billing'] = "+"..params:getHeader("variable_effective_destination_number")
                     freeswitch_xml_callerid_redirected(xml, callerid_astpp_headers)
-                    calleridinfo = {}
+                    
                     calleridinfo['cid_name'] = outbound_caller_id
                     calleridinfo['cid_number'] = outbound_caller_id
                 end
@@ -408,10 +412,12 @@ if (userinfo ~= nil) then
                 else
                     if (callerid_consertis ~= nil) then
                         callerid_outbound, callerid_billing = callerid_consertis
-                        calleridinfo = {}
                         calleridinfo['cid_name'] = callerid_outbound
                         calleridinfo['cid_number'] = callerid_outbound
+
                         xml = freeswitch_xml_callerid(xml,calleridinfo)
+
+                        calleridinfo['cid_number'] = callerid_billing
                         -- xml = freeswitch_xml_callerid_colt_consertis(xml, calleridinfo) 
                         -- removed to better times
                     end 

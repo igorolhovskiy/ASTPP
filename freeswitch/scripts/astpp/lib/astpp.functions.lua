@@ -673,8 +673,6 @@ function var_dump(...)
     end
 end
 
--- **** --- Custom callback functions for number_translation (callerID involved?)
-
-function neo_tel_number_normalization(xml, destination_number, calleridinfo)
+function telgo_number_translation(xml, destination_number, calleridinfo)
     return xml, destination_number
 end

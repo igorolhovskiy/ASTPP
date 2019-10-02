@@ -508,3 +508,40 @@ function freeswitch_xml_forward_to_pstn(xml, didinfo_account_code, userinfo_id, 
         table.insert(xml, [[<action application="set" data="origination_rates_did=]] .. xml_did_rates .. [["/>]])
 		table.insert(xml, [[<action application="transfer" data="]] .. transfer_to .. [[ XML default"/>]])
 end
+
+-- **** --- Custom callback functions for number_translation (callerID involved?)
+
+function neo_tel_number_normalization(xml, destination_number, calleridinfo)
+
+    tmp_xml = xml
+    -- Cleanup destination number
+    tmp_destination_number = "+" .. destination_number:gsub("%D", "")
+
+    -- Process callerIDinfo first
+    if (calleridinfo ~= nil) then
+        local callerid_name = string.lower(calleridinfo['cid_name']) or ""
+        local callerid_number = "+" .. calleridinfo['cid_number'] or ""
+
+        callerid_number = callerid_number:gsub("%D", "")
+        -- Check for Anon
+		if (callerid_name:find('anon') or callerid_name:find('restricted')) then
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]]);
+            table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=rpid"/>]])
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:origination_privacy=screen+hide_name+hide_number"/>]])
+			return tmp_xml, tmp_destination_number
+		end
+
+		callerid_name = "+" .. callerid_name:gsub("%D", "")
+		-- Normal call
+		if callerid_name == callerid_number then
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]]);
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]]);
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=pid"/>]])
+			return tmp_xml, tmp_destination_number
+		end
+		-- Faking callerID
+
+    end
+
+    return tmp_xml, tmp_destination_number
+end
