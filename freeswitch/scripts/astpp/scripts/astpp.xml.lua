@@ -130,7 +130,7 @@ function freeswitch_xml_outbound(xml, destination_number, outbound_info, calleri
 				xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, calleridinfo)
 			end
 		else 
-			temp_destination_number = do_number_translation(outbound_info['dialed_modify'], temp_destination_number)
+			temp_destination_number = do_number_translation(number_translation, temp_destination_number)
 		end
 	end
 
@@ -520,27 +520,37 @@ function neo_tel_number_normalization(xml, destination_number, calleridinfo)
     -- Process callerIDinfo first
     if (calleridinfo ~= nil) then
         local callerid_name = string.lower(calleridinfo['cid_name']) or ""
-        local callerid_number = "+" .. calleridinfo['cid_number'] or ""
+        local callerid_number = calleridinfo['cid_number'] or ""
 
-        callerid_number = callerid_number:gsub("%D", "")
+		callerid_number = "+" .. callerid_number:gsub("%D", "")
+		callerid_name = "+" .. callerid_name:gsub("%D", "")
+
+		-- Normal call
+		if callerid_name == callerid_number then
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]])
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=pid"/>]])
+			return tmp_xml, tmp_destination_number
+		end
+		
         -- Check for Anon
 		if (callerid_name:find('anon') or callerid_name:find('restricted')) then
-			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]]);
-            table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=rpid"/>]])
-			table.insert(tmp_xml, [[<action application="export" data="nolocal:origination_privacy=screen+hide_name+hide_number"/>]])
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=anonymous"/>]]);
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=anonymous"/>]]);
+			table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@sip.flowcall.at>"/>]])
+			table.insert(tmp_xml, [[<action application="set" data="sip_h_Privacy=id;"/>]])
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
 			return tmp_xml, tmp_destination_number
 		end
 
 		callerid_name = "+" .. callerid_name:gsub("%D", "")
-		-- Normal call
-		if callerid_name == callerid_number then
-			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]]);
-			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]]);
-			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=pid"/>]])
-			return tmp_xml, tmp_destination_number
-		end
-		-- Faking callerID
-
+		
+		-- Faking callerID. Assuming real number is number, faking is name
+		table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
+		table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+		table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@sip.flowcall.at>"/>]])
+		table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Preferred-Identity=<sip:]]..callerid_name..[[@sip.flowcall.at>"/>]])
+		table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
     end
 
     return tmp_xml, tmp_destination_number
