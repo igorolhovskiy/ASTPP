@@ -76,6 +76,8 @@ function check_did(destination_number,config)
 	end))
 	return didinfo;
 end
+
+
 -- check Reseller DID OVERRIDE
 function check_did_reseller(destination_number,userinfo,config)
 	local number_translation 
@@ -196,4 +198,49 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 		table.insert(xml, [[<action application="bridge" data="[]]..chan_var..[[]sofia/gateway/]]..outbound_info['path2']..[[/]]..temp_destination_number..[["/>]]);
 	end
     return xml
+end
+
+function neotel_number_normalization(xml, destination_number, calleridinfo)
+
+    tmp_xml = xml
+    -- Cleanup destination number
+    tmp_destination_number = "+" .. destination_number:gsub("%D", "")
+
+    -- Process callerIDinfo first
+    if (calleridinfo ~= nil) then
+        local callerid_name = string.lower(calleridinfo['cid_name']) or ""
+        local callerid_number = calleridinfo['cid_number'] or ""
+
+		callerid_number = "+" .. callerid_number:gsub("%D", "")
+		callerid_name = "+" .. callerid_name:gsub("%D", "")
+
+		-- Normal call
+		if callerid_name == callerid_number then
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]])
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=pid"/>]])
+			return tmp_xml, tmp_destination_number
+		end
+		
+        -- Check for Anon
+		if (callerid_name:find('anon') or callerid_name:find('restricted')) then
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=anonymous"/>]]);
+			table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=anonymous"/>]]);
+			table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+			table.insert(tmp_xml, [[<action application="set" data="sip_h_Privacy=id;"/>]])
+			table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
+			return tmp_xml, tmp_destination_number
+		end
+
+		callerid_name = "+" .. callerid_name:gsub("%D", "")
+		
+		-- Faking callerID. Assuming real number is number, faking is name
+		table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
+		table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+		table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+		table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Preferred-Identity=<sip:]]..callerid_name..[[@$${domain}>"/>]])
+		table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
+    end
+
+    return tmp_xml, tmp_destination_number
 end
