@@ -401,7 +401,7 @@ function get_call_maxlength(userinfo,destination_number,call_direction,number_lo
 	end
 
 	balance = get_balance(userinfo,'',config)
-	      Logger.info("[FIND_MAXLENGTH] Your"..balance.." balance Accountid "..userinfo['id'].." !!!")
+	      Logger.info("[FIND_MAXLENGTH] Your "..balance.." balance Accountid "..userinfo['id'].." !!!")
 	if (balance < (rates['connectcost'] + rates['cost']) and tonumber(package_id) == 0) then
 	      Logger.info("[FIND_MAXLENGTH] Your balance is not sufficent to dial "..destination_number.." !!!")
 	      return 'NO_SUFFICIENT_FUND'
