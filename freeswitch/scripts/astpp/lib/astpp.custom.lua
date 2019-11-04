@@ -1,5 +1,8 @@
 
 function did_fix_query_austrian(field, dialed_number, offset)
+
+    Logger.notice("[CUSTOM]: did_fix_query_austrian")
+
     local num_length = string.len(dialed_number)
     if offset >= num_length then
         offset = num_length - 1
@@ -15,6 +18,9 @@ end
 
 --- Get CallerID normalization for support of {ani} and {name} keyword
 function normalize_callerid_ani(callerid)
+
+    Logger.notice("[CUSTOM]: normalize_callerid_ani")
+
     if (callerid ~= nil) then
         callerid_override_name = callerid['cid_name']
         callerid_override_number = callerid['cid_number']
@@ -48,6 +54,9 @@ end
 
 -- Check DID info OVERRIDE
 function check_did(destination_number,config)
+
+    Logger.notice("[CUSTOM]: check_did")
+
 	local did_localization = nil 
 	if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
 		did_localization = get_localization(config['did_global_translation'],'O')
@@ -80,6 +89,9 @@ end
 
 -- check Reseller DID OVERRIDE
 function check_did_reseller(destination_number,userinfo,config)
+
+    Logger.notice("[CUSTOM]: check_did_reseller")
+
 	local number_translation 
 	number_translation = config['did_global_translation'];
 	destination_number = do_number_translation(number_translation,destination_number)   
@@ -99,6 +111,8 @@ end
 
 -- Dialplan for outbound calls OVERRIDE
 function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_array,rate_group_id,old_trunk_id,force_outbound_routes,rategroup_type,livecall_data)
+
+    Logger.notice("[CUSTOM]: freeswitch_xml_outbound")
 
 	local temp_destination_number = destination_number
 	local tr_localization=nil
@@ -204,6 +218,7 @@ end
 
 function neotel_number_normalization(xml, destination_number, calleridinfo)
 
+    Logger.notice("[CUSTOM]: neotel_number_normalization")
     tmp_xml = xml
     -- Cleanup destination number
     tmp_destination_number = "+" .. destination_number:gsub("%D", "")
