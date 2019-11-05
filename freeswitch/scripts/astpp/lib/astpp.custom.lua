@@ -229,7 +229,6 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         local callerid_number = calleridinfo['cid_number'] or ""
 
 		callerid_number = "+" .. callerid_number:gsub("%D", "")
-		callerid_name = "+" .. callerid_name:gsub("%D", "")
 
 		-- Normal call
 		if callerid_name == callerid_number then
