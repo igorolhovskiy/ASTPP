@@ -1532,7 +1532,7 @@ class CI_Form_validation {
     		if( $password_type == '0' ) {
 
 
-    			if(1 !== preg_match('/^(?=.*\d)(?=.*[A-Za-z])[0-9A-Za-z!@#$%^&*()+]{8,}$/', $str)) {
+    			if(1 !== preg_match('/^(?=.*\d)(?=.*[A-Za-z])[0-9A-Za-z!@#$%^&*=\/\\()+]{8,}$/', $str)) {
 		        	$this->CI->form_validation->set_message('chk_password_expression', gettext('%s must be at least 8 characters and must contain at least one lower case letter, one upper case letter and one digit and any special characters must have included'));
 			        
 			        return FALSE;
