@@ -1,4 +1,16 @@
 
+function string:split(sep)
+    if sep == "" then
+        local fields = {}
+        table.insert(fields, self)
+        return fields
+    end
+	local sep, fields = sep or ",", {}
+	local pattern = string.format("([^%s]+)", sep)
+	self:gsub(pattern, function(c) fields[#fields+1] = c end)
+	return fields
+ end
+
 function did_fix_query_austrian(field, dialed_number, offset)
 
     Logger.notice("[CUSTOM]: did_fix_query_austrian")
@@ -303,4 +315,65 @@ function do_number_translation(number_translation, destination_number)
       end
     end
     return destination_number
+end
+
+-- SIP-DID function call OVERRIDE
+function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
+	is_local_extension = "1"
+    local bridge_str = ""
+	local destination_str = {}
+	local common_chan_var = ""
+	local deli_str = {}
+	local sip_did_backup_info
+	local sip_did_backup_string
+
+	local tmp_extensions_list = string.split(didinfo['extensions'], ":")
+
+	local tmp_extensions = tmp_extensions_list[1]
+
+	string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
+	string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
+
+	table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]])
+
+	if (config['opensips'] == '1') then
+		common_chan_var = "{sip_contact_user="..destination_number.."}"
+		for i = 1, #destination_str do
+			if notify then notify(xml,destination_str[i]) end
+			bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."${regex(${sofia_contact("..destination_str[i].."@${domain_name})}|^[^@]+(.*)|%1)}"
+			if i <= #deli_str then
+				bridge_str = bridge_str..deli_str[i]
+			end
+		end
+		
+		if (tmp_extensions_list[2]) then -- We have a backup!
+			sip_did_backup_info = = string.split(tmp_extensions_list[2], "@") -- Check format like <number@ip> or just <ip>
+			if (sip_did_backup_info[2]) then
+				sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..sip_did_backup_info[1].."@"..sip_did_backup_info[2]
+			else
+				sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."@"..sip_did_backup_info[1]
+			end
+			table.insert(xml, [[<action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,NO_ROUTE_DESTINATION"/>]])
+		end
+
+		-- Put first destination
+		table.insert(xml, [[<action application="bridge" data="]]..common_chan_var..bridge_str..[["/>]])
+		if (sip_did_backup_string) then
+			table.insert(xml, [[<action application="bridge" data="]]..sip_did_backup_string..[["/>]])
+		end
+
+    else
+		common_chan_var = "{sip_invite_params=user=LOCAL,sip_from_uri="..tmp_extensions.."@${domain_name}}"
+		for i = 1, #destination_str do
+			if notify then notify(xml,destination_str[i]) end
+			bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_str[i].."@"..config['opensips_domain']
+			if i <= #deli_str then
+				bridge_str = bridge_str..deli_str[i]
+			end
+		end
+		table.insert(xml, [[<action application="bridge" data="]]..common_chan_var..bridge_str..[["/>]])
+    end
+-- To leave voicemail 
+        leave_voicemail(xml,destination_number,destination_str[1])
+	return xml;
 end
