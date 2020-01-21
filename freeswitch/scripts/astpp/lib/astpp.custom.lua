@@ -176,7 +176,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 		local dialplan_variable = split(outbound_info['dialplan_variable'],",")      
 		for dialplan_variable_key,dialplan_variable_value in pairs(dialplan_variable) do
 			local dialplan_variable_data = split(dialplan_variable_value,"=")  
-			Logger.debug("[GATEWAY VARIABLE ] : "..dialplan_variable_data[1] )
+			Logger.debug("[GATEWAY VARIABLE] : "..dialplan_variable_data[1] )
             if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
                 if (dialplan_variable_data[1] == 'force_callback') then
                     callback_function_name = dialplan_variable_data[2]
