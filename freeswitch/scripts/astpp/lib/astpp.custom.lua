@@ -175,7 +175,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 
     -- Check if is there any gateway configuration params available for it.
     if (outbound_info['dialplan_variable'] ~= '') then 
-        Logger.info(" ".. outbound_info['dialplan_variable']);
+        Logger.info("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Gateway variables: ".. outbound_info['dialplan_variable']);
         local dialplan_variable = split(outbound_info['dialplan_variable'],",")      
         for dialplan_variable_key,dialplan_variable_value in pairs(dialplan_variable) do
             local dialplan_variable_data = split(dialplan_variable_value,"=")  
@@ -183,7 +183,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
             if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
                 if (dialplan_variable_data[1] == 'force_callback') then
                     callback_function_name = dialplan_variable_data[2]
-                    Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] : Callback triggered to "..callback_function_name)
+                    Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Callback triggered to "..callback_function_name)
                     if (_G[callback_function_name] ~= nil) then
                         xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, callerid_array)
                     end
@@ -222,10 +222,48 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
     end
 
     if(outbound_info['path1'] ~= '' and outbound_info['path1'] ~= outbound_info['path']) then
+        -- Check if is there any failover gateway #1 configuration params available for it.
+        if (outbound_info['dialplan_variable_1'] ~= '') then 
+            Logger.info("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Failover gateway #1 variables: ".. outbound_info['dialplan_variable_1']);
+            local dialplan_variable = split(outbound_info['dialplan_variable_1'],",")      
+            for dialplan_variable_key,dialplan_variable_value in pairs(dialplan_variable) do
+                local dialplan_variable_data = split(dialplan_variable_value,"=")  
+                Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Failover gateway #1 variable: "..dialplan_variable_data[1] )
+                if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
+                    if (dialplan_variable_data[1] == 'force_callback') then
+                        callback_function_name = dialplan_variable_data[2]
+                        Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Callback triggered to "..callback_function_name)
+                        if (_G[callback_function_name] ~= nil) then
+                            xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, callerid_array)
+                        end
+                    end
+                    table.insert(xml, [[<action application="set" data="]]..dialplan_variable_data[1].."="..dialplan_variable_data[2]..[["/>]])
+                end
+            end             
+        end
         table.insert(xml, [[<action application="bridge" data="[]]..chan_var..[[]sofia/gateway/]]..outbound_info['path1']..[[/]]..temp_destination_number..[["/>]]);
     end
 
     if(outbound_info['path2'] ~= '' and outbound_info['path2'] ~= outbound_info['path'] and outbound_info['path2'] ~= outbound_info['path1']) then
+        -- Check if is there any failover gateway #2 configuration params available for it.
+        if (outbound_info['dialplan_variable_2'] ~= '') then 
+            Logger.info("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Failover gateway #2 variables: ".. outbound_info['dialplan_variable_2']);
+            local dialplan_variable = split(outbound_info['dialplan_variable_2'],",")      
+            for dialplan_variable_key,dialplan_variable_value in pairs(dialplan_variable) do
+                local dialplan_variable_data = split(dialplan_variable_value,"=")  
+                Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Failover gateway #2 variable: "..dialplan_variable_data[1] )
+                if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
+                    if (dialplan_variable_data[1] == 'force_callback') then
+                        callback_function_name = dialplan_variable_data[2]
+                        Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Callback triggered to "..callback_function_name)
+                        if (_G[callback_function_name] ~= nil) then
+                            xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, callerid_array)
+                        end
+                    end
+                    table.insert(xml, [[<action application="set" data="]]..dialplan_variable_data[1].."="..dialplan_variable_data[2]..[["/>]])
+                end
+            end             
+        end
         table.insert(xml, [[<action application="bridge" data="[]]..chan_var..[[]sofia/gateway/]]..outbound_info['path2']..[[/]]..temp_destination_number..[["/>]]);
     end
     return xml
@@ -439,6 +477,33 @@ function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rat
             carrier_ignore_duplicate[u['trunk_id']] = true
         end
     end))
+
+    -- Get also dialplan variables of failover gateways
+    for i, carrier_rate in pairs(carrier_rates) do
+
+        Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Checking for gw variables carrier rate " .. i)
+
+        local gateway_name1 = carrier_rate['path1']
+        local gateway_name2 = carrier_rate['path2']
+
+        if (gateway_name1 and #gateway_name1 > 0) then
+            query = "SELECT dialplan_variable FROM " ..TBL_GATEWAYS.." WHERE status = 0 AND name = '" .. gateway_name1 .. "' LIMIT 1"
+            Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Query for failover gw #1 " .. query)
+            assert (dbh:query(query, function(row) 
+                carrier_rates[i]['dialplan_variable_1'] = row['dialplan_variable']               
+                Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Dialplan variables for failover gw #1 " .. row['dialplan_variable'])
+            end))
+        end
+
+        if (gateway_name2 and #gateway_name2 > 0) then
+            query = "SELECT dialplan_variable FROM " ..TBL_GATEWAYS.." WHERE status = 0 AND name = '" .. gateway_name2 .. "' LIMIT 1"
+            Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Query for failover gw #2 " .. query)
+            assert (dbh:query(query, function(row) 
+                carrier_rates[i]['dialplan_variable_2'] = row['dialplan_variable']
+                Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Dialplan variables for failover gw #2 " .. row['dialplan_variable'])
+            end))
+        end
+    end
 
     return carrier_rates
 end
