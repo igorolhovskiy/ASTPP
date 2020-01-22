@@ -347,7 +347,7 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 		end
 		
 		if (tmp_extensions_list[2]) then -- We have a backup!
-			sip_did_backup_info = = string.split(tmp_extensions_list[2], "@") -- Check format like <number@ip> or just <ip>
+			sip_did_backup_info = string.split(tmp_extensions_list[2], "@") -- Check format like <number@ip> or just <ip>
 			if (sip_did_backup_info[2]) then
 				sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..sip_did_backup_info[1].."@"..sip_did_backup_info[2]
 			else
