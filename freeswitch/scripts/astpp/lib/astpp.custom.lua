@@ -13,7 +13,7 @@ function string:split(sep)
 
 function did_fix_query_austrian(field, dialed_number, offset)
 
-    Logger.notice("[CUSTOM]: did_fix_query_austrian")
+    Logger.notice("[DID_FIX_QUERY_AUSTRIAN]: Start")
 
     local num_length = string.len(dialed_number)
     if offset >= num_length then
@@ -31,7 +31,7 @@ end
 --- Get CallerID normalization for support of {ani} and {name} keyword
 function normalize_callerid_ani(callerid)
 
-    Logger.notice("[CUSTOM]: normalize_callerid_ani")
+    Logger.notice("[NORMALIZE_CALLERID_ANI]: Start")
 
     if (callerid ~= nil) then
         callerid_override_name = callerid['cid_name']
@@ -67,7 +67,7 @@ end
 -- Check DID info OVERRIDE
 function check_did(destination_number,config)
 
-    Logger.notice("[CUSTOM]: check_did")
+    Logger.notice("[CHECK_DID_OVERRIDE]: Start")
 
 	local did_localization = nil 
 	if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
@@ -84,7 +84,7 @@ function check_did(destination_number,config)
 	-- Version from 3.0m	   
 	   local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." LIMIT 1";
 
-	Logger.debug("[CHECK_DID] Query :" .. query)
+	Logger.debug("[CHECK_DID_OVERRIDE] Query :" .. query)
 	assert (dbh:query(query, function(u)
 		didinfo = u;	 
 		-- B.did_cid_translation as did_cid_translation,
@@ -102,10 +102,11 @@ end
 -- check Reseller DID OVERRIDE
 function check_did_reseller(destination_number,userinfo,config)
 
-    Logger.notice("[CUSTOM]: check_did_reseller")
+    Logger.notice("[CHECK_DID_RESELLER_OVERRIDE]: Start")
 
 	local number_translation 
 	number_translation = config['did_global_translation'];
+
 	destination_number = do_number_translation(number_translation,destination_number)   
 	
 	--	4.0.1 Original function
@@ -114,17 +115,19 @@ function check_did_reseller(destination_number,userinfo,config)
 	-- Version from 3.0m
 	local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5);
 
-	Logger.debug("[CHECK_DID_RESELLER] Query :" .. query)
+	Logger.debug("[CHECK_DID_RESELLER_OVERRIDE] Query :" .. query)
+
 	assert (dbh:query(query, function(u)
 		didinfo = u;
 	end))
+
 	return didinfo;
 end
 
 -- Dialplan for outbound calls OVERRIDE
 function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_array,rate_group_id,old_trunk_id,force_outbound_routes,rategroup_type,livecall_data)
 
-    Logger.notice("[CUSTOM]: freeswitch_xml_outbound")
+    Logger.notice("[FREESWITCH_XML_OUTBOUND_OVERRIDE]: Start")
 
 	local temp_destination_number = destination_number
 	local tr_localization=nil
@@ -176,11 +179,11 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 		local dialplan_variable = split(outbound_info['dialplan_variable'],",")      
 		for dialplan_variable_key,dialplan_variable_value in pairs(dialplan_variable) do
 			local dialplan_variable_data = split(dialplan_variable_value,"=")  
-			Logger.debug("[GATEWAY VARIABLE] : "..dialplan_variable_data[1] )
+			Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] Gateway variable: "..dialplan_variable_data[1] )
             if( dialplan_variable_data[1] ~= nil and dialplan_variable_data[2] ~= nil) then
                 if (dialplan_variable_data[1] == 'force_callback') then
                     callback_function_name = dialplan_variable_data[2]
-                    Logger.debug("[GATEWAY VARIABLE] : Callback triggered to "..callback_function_name)
+                    Logger.debug("[FREESWITCH_XML_OUTBOUND_OVERRIDE] : Callback triggered to "..callback_function_name)
                     if (_G[callback_function_name] ~= nil) then
                         xml, temp_destination_number = _G[callback_function_name](xml, temp_destination_number, callerid_array)
                     end
@@ -230,7 +233,7 @@ end
 
 function neotel_number_normalization(xml, destination_number, calleridinfo)
 
-    Logger.notice("[CUSTOM]: neotel_number_normalization")
+    Logger.notice("[NEOTEL_NUMBER_NORMALIZATION]: Start")
     tmp_xml = xml
     -- Cleanup destination number
     tmp_destination_number = "+" .. destination_number:gsub("%D", "")
@@ -296,7 +299,7 @@ function do_number_translation(number_translation, destination_number)
       end
       local prefix = string.sub(destination_number, 0, string.len(tmp_str[1]));
       if (prefix == tmp_str[1] or tmp_str[1] == '*') then
-	    Logger.notice("[DONUMBERTRANSLATION_ONLY_ONE] Before Localization CLI/DST : " .. destination_number)
+	    Logger.notice("[DO_NUMBER_TRANSLATION_OVERRIDE] Before Localization CLI/DST : " .. destination_number)
 		if(tmp_str[2] ~= nil) then
             if (tmp_str[2] == '*') then
     			destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
@@ -310,7 +313,7 @@ function do_number_translation(number_translation, destination_number)
 		else
 		    destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
 		end
-        Logger.notice("[DONUMBERTRANSLATION_ONLY_ONE] After Localization CLI/DST : " .. destination_number)
+        Logger.notice("[DO_NUMBER_TRANSLATION_OVERRIDE] After Localization CLI/DST : " .. destination_number)
         return destination_number
       end
     end
@@ -319,6 +322,7 @@ end
 
 -- SIP-DID function call OVERRIDE
 function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
+
 	is_local_extension = "1"
     local bridge_str = ""
 	local destination_str = {}
@@ -326,6 +330,8 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 	local deli_str = {}
 	local sip_did_backup_info
 	local sip_did_backup_string
+
+	Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Start")
 
 	local tmp_extensions_list = string.split(didinfo['extensions'], ":")
 
@@ -433,6 +439,6 @@ function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rat
 			carrier_ignore_duplicate[u['trunk_id']] = true
 		end
 	end))
-	
+
 	return carrier_rates
 end
