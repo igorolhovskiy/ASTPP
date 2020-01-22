@@ -374,6 +374,65 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 		table.insert(xml, [[<action application="bridge" data="]]..common_chan_var..bridge_str..[["/>]])
     end
 -- To leave voicemail 
-        leave_voicemail(xml,destination_number,destination_str[1])
+    leave_voicemail(xml,destination_number,destination_str[1])
+	
 	return xml;
+end
+
+
+-- Get carrier rates OVERRIDE
+function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rate_carrier_id, routing_type)
+	
+	local carrier_rates = {}     
+	local trunk_id = 0     
+	local query
+
+	Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Start...")
+	
+	if routing_type == 1 then
+		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM (select * from "..TBL_TERMINATION_RATES.." order by LENGTH (pattern) DESC) as TR "..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
+	else
+		query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM "..TBL_TERMINATION_RATES.." as TR,"..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
+	end
+
+	if (rate_carrier_id and rate_carrier_id ~= nil and rate_carrier_id ~= '0' and string.len(rate_carrier_id) >= 1) then
+		query = query.." AND TR.trunk_id IN ("..rate_carrier_id..") "
+	else
+		trunk_ids={}
+		local query_trunks  = "SELECT GROUP_CONCAT(trunk_id) as ids FROM "..TBL_ROUTING.." WHERE pricelist_id="..ratecard_id.." ORDER by id asc";    
+
+		Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Trunks query :" .. query_trunks)
+
+		assert (dbh:query(query_trunks, function(u)
+			trunk_ids = u
+		end))
+
+		if (trunk_ids['ids'] == "" or trunk_ids['ids'] == nil) then
+			trunk_ids['ids'] = 0
+		end
+
+		query = query.." AND TR.trunk_id IN ("..trunk_ids['ids']..")"
+	end
+
+	if routing_type == "1" then
+		query = query.." ORDER by TR.cost ASC,TR.precedence ASC, TK.precedence"
+	else
+		query = query.." ORDER by LENGTH (pattern) DESC,TR.cost ASC,TR.precedence ASC, TK.precedence"
+	end
+
+	Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Query :" .. query)
+
+	local i = 1
+	local carrier_ignore_duplicate = {}
+	
+	assert (dbh:query(query, function(u)
+		if (carrier_ignore_duplicate[u['trunk_id']] == nil) then
+			carrier_rates[i] = u
+			Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Adding carrier rate " .. i)
+			i = i + 1
+			carrier_ignore_duplicate[u['trunk_id']] = true
+		end
+	end))
+	
+	return carrier_rates
 end
