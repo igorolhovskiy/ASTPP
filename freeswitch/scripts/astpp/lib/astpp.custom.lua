@@ -371,7 +371,7 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 
     Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Processing " .. didinfo['extensions'])
 
-    local tmp_extensions_list = string.split(didinfo['extensions'], ":")
+    local tmp_extensions_list = string.split(didinfo['extensions'], ";")
     local tmp_extensions = tmp_extensions_list[1]
 
     Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Forwarding to  " .. tmp_extensions)
