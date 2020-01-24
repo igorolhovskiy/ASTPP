@@ -369,11 +369,12 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     local sip_did_backup_info
     local sip_did_backup_string
 
-    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Start")
+    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Processing " .. didinfo['extensions'])
 
     local tmp_extensions_list = string.split(didinfo['extensions'], ":")
-
     local tmp_extensions = tmp_extensions_list[1]
+
+    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Forwarding to  " .. tmp_extensions)
 
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
@@ -383,7 +384,9 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     if (config['opensips'] == '1') then
         common_chan_var = "{sip_contact_user="..destination_number.."}"
         for i = 1, #destination_str do
-            if notify then notify(xml,destination_str[i]) end
+            if notify then 
+                notify(xml,destination_str[i]) 
+            end
             bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."${regex(${sofia_contact("..destination_str[i].."@${domain_name})}|^[^@]+(.*)|%1)}"
             if i <= #deli_str then
                 bridge_str = bridge_str..deli_str[i]
@@ -391,13 +394,14 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
         end
         
         if (tmp_extensions_list[2]) then -- We have a backup!
+            Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Adding a backup to " .. tmp_extensions_list[2])
             sip_did_backup_info = string.split(tmp_extensions_list[2], "@") -- Check format like <number@ip> or just <ip>
             if (sip_did_backup_info[2]) then
                 sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..sip_did_backup_info[1].."@"..sip_did_backup_info[2]
             else
                 sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."@"..sip_did_backup_info[1]
             end
-            table.insert(xml, [[<action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,NO_ROUTE_DESTINATION"/>]])
+            table.insert(xml, [[<action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,NO_ROUTE_DESTINATION,USER_NOT_REGISTERED"/>]])
         end
 
         -- Put first destination
