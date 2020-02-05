@@ -134,9 +134,8 @@ end
 -- Check local info 
 function check_local_call(destination_number)
 
-	-- TODO - add did_fix_query_austrian here as well
-	local query = "SELECT sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username=\"" ..destination_number .."\" limit 1";
-
+	-- TODO - add did_fix_query_austrian here as well. No need. Local call is a call to SIP device directly.
+	local query = "SELECT sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username=\"" ..destination_number .."\" LIMIT 1"
 
 	Logger.debug("[CHECK_LOCAL_CALL] Query :" .. query)
 	assert (dbh:query(query, function(u)

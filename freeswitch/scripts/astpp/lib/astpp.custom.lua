@@ -374,7 +374,7 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     local tmp_extensions_list = string.split(didinfo['extensions'], ";")
     local tmp_extensions = tmp_extensions_list[1]
 
-    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Forwarding to  " .. tmp_extensions)
+    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Forwarding to " .. tmp_extensions)
 
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
@@ -510,4 +510,27 @@ function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rat
     end
 
     return carrier_rates
+end
+
+-- Check avilable DID info 
+function is_did_orphaned(destination_number,config)
+
+    Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start...")
+
+	local did_localization = nil 
+	local check_did_info = ""
+	if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
+		did_localization = get_localization(config['did_global_translation'],'O')
+		if (did_localization ~= nil) then
+			did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
+			destination_number = do_number_translation(did_localization['number_originate'],destination_number)
+		end
+    end
+    
+	local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. "\" AND (accountid = 0 OR status = 1) LIMIT 1";
+	Logger.debug("[IS_CHECK_DID] Query :" .. query)
+	assert (dbh:query(query, function(u)
+		check_did_info = u;	 
+	end))
+	return check_did_info;
 end
