@@ -167,9 +167,9 @@ userinfo = doauthorization("number",accountcode,call_direction,destination_numbe
 --Added for fraud detection checking
 --if fraud_check then fraud_check(accountcode,destination_number) end
 
-is_did_check = is_did(destination_number,config);
+is_did_check = is_did_orphaned(destination_number,config)
 if (is_did_check ~= nil and is_did_check['id']) then
-    Logger.info("[Dialplan] New Call direction HEREE : ".. call_direction)
+    Logger.info("[Dialplan] DID " .. destination_number .. " is not belongs to any client")
 	error_xml_without_cdr(destination_number,"NO_ROUTE_DESTINATION",calltype,config['playback_audio_notification'],userinfo['id'])
 	return 0
 end	

@@ -72,7 +72,7 @@ function define_call_direction(destination_number,accountcode,config)
 	return call_direction;
 end
 -- Check avilable DID info 
-function is_did(destination_number,config)
+function is_did_orphaned(destination_number,config)
 	local did_localization = nil 
 	local check_did_info = ""
 	if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
