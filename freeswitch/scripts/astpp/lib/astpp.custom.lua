@@ -534,3 +534,16 @@ function is_did_orphaned(destination_number,config)
 	end))
 	return check_did_info;
 end
+
+
+function skytel_number_normalization(xml, destination_number, calleridinfo)
+
+    Logger.notice("[SKYTEL_NUMBER_NORMALIZATION]: Start")
+
+    local tmp_xml = xml
+    local tmp_destination_number = destination_number
+
+    Logger.notice("[SKYTEL_NUMBER_NORMALIZATION] D:" .. tmp_destination_number .. " C[name]: " .. calleridinfo['cid_name'] .. " C[number]:" .. calleridinfo['cid_number'])
+
+    return tmp_xml, tmp_destination_number
+end
