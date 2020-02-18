@@ -527,8 +527,8 @@ function is_did_orphaned(destination_number,config)
 		end
     end
     
-	local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. "\" AND (accountid = 0 OR status = 1) LIMIT 1";
-	Logger.debug("[IS_CHECK_DID] Query :" .. query)
+	local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. " AND (accountid = 0 OR status = 1) LIMIT 1";
+	Logger.debug("[IS_DID_ORPHANED_OVERRIDE] Query :" .. query)
 	assert (dbh:query(query, function(u)
 		check_did_info = u;	 
 	end))
