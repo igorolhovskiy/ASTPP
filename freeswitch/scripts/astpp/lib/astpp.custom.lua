@@ -281,7 +281,7 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         local callerid_name = string.lower(calleridinfo['cid_name']) or ""
         local callerid_number = calleridinfo['cid_number'] or ""
 
-        if (callerid_number ~= "") then
+        if (callerid_number ~= "" and callerid_number:find('anon') == nil) then
             callerid_number = "+" .. callerid_number:gsub("%D", "")
         end
 
