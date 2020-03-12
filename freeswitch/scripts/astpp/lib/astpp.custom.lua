@@ -373,7 +373,7 @@ function do_number_translation(number_translation, destination_number)
 end
 
 -- SIP-DID function call OVERRIDE
-function custom_inbound_5(xml, , userinfo, config, xml_did_rates, callerid_array, livecall_data)
+function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
 
     is_local_extension = "1"
     local bridge_str = ""
