@@ -545,22 +545,22 @@ function is_did_orphaned(destination_number,config)
 
     Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start...")
 
-	local did_localization = nil 
-	local check_did_info = ""
-	if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
-		did_localization = get_localization(config['did_global_translation'],'O')
-		if (did_localization ~= nil) then
-			did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
-			destination_number = do_number_translation(did_localization['number_originate'],destination_number)
-		end
+    local did_localization = nil 
+    local check_did_info = ""
+    if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
+        did_localization = get_localization(config['did_global_translation'],'O')
+        if (did_localization ~= nil) then
+            did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
+            destination_number = do_number_translation(did_localization['number_originate'],destination_number)
+        end
     end
     
-	local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. " AND (accountid = 0 OR status = 1) LIMIT 1";
-	Logger.debug("[IS_DID_ORPHANED_OVERRIDE] Query :" .. query)
-	assert (dbh:query(query, function(u)
-		check_did_info = u;	 
-	end))
-	return check_did_info;
+    local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. " AND (accountid = 0 OR status = 1) LIMIT 1";
+    Logger.debug("[IS_DID_ORPHANED_OVERRIDE] Query :" .. query)
+    assert (dbh:query(query, function(u)
+        check_did_info = u;	 
+    end))
+    return check_did_info;
 end
 
 
