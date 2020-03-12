@@ -149,9 +149,9 @@ end
 function get_ani(ani_number)
     
     local query = "SELECT * FROM ani_map WHERE number = ".. ani_number
-    Logger.debug("[CHECK_DID] Query :" .. query)  
+    Logger.debug("[GET_ANI] Query :" .. query)  
     assert (dbh:query(query, function(u)
-	ani = u;
+		ani = u;
     end))
     return ani;
 end

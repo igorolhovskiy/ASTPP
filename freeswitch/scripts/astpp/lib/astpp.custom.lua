@@ -82,7 +82,7 @@ function check_did(destination_number,config)
     -- local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE B.status=0 AND B.deleted=0 AND B.id=A.accountid AND A.number =\"" ..destination_number .."\" LIMIT 1";
 
     -- Version from 3.0m	   
-       local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
+       local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
 
     Logger.debug("[CHECK_DID_OVERRIDE] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -113,7 +113,7 @@ function check_did_reseller(destination_number,userinfo,config)
     --	local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE A.number = \"" ..destination_number .."\"  AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND B.note =\"" ..destination_number .."\"";
 
     -- Version from 3.0m
-    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
+    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
 
     Logger.debug("[CHECK_DID_RESELLER_OVERRIDE] Query :" .. query)
 
@@ -373,7 +373,7 @@ function do_number_translation(number_translation, destination_number)
 end
 
 -- SIP-DID function call OVERRIDE
-function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
+function custom_inbound_5(xml, , userinfo, config, xml_did_rates, callerid_array, livecall_data)
 
     is_local_extension = "1"
     local bridge_str = ""
@@ -382,6 +382,7 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     local deli_str = {}
     local sip_did_backup_info
     local sip_did_backup_string
+    local destination_number_translated
 
     Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Processing " .. didinfo['extensions'])
 
@@ -393,15 +394,28 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
 
+    -- Update destination number in a case of suffix/prefix existing
+
+    destination_number_translated = destination_number
+    if (didinfo['prepend_prefix'] and didinfo['prepend_prefix'] ~= "") {
+        destination_number_translated = didinfo['prepend_prefix'] .. destination_number_translated
+        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
+    }
+
+    if (didinfo['prepend_suffix'] and didinfo['prepend_suffix'] ~= "") {
+        destination_number_translated = destination_number_translated .. didinfo['prepend_suffix']
+        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
+    }
+
     table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]])
 
     if (config['opensips'] == '1') then
-        common_chan_var = "{sip_contact_user="..destination_number.."}"
+        common_chan_var = "{sip_contact_user="..destination_number_translated.."}"
         for i = 1, #destination_str do
             if notify then 
                 notify(xml,destination_str[i]) 
             end
-            bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."${regex(${sofia_contact("..destination_str[i].."@${domain_name})}|^[^@]+(.*)|%1)}"
+            bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number_translated.."${regex(${sofia_contact("..destination_str[i].."@${domain_name})}|^[^@]+(.*)|%1)}"
             if i <= #deli_str then
                 bridge_str = bridge_str..deli_str[i]
             end
@@ -413,7 +427,7 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
             if (sip_did_backup_info[2]) then
                 sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..sip_did_backup_info[1].."@"..sip_did_backup_info[2]
             else
-                sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number.."@"..sip_did_backup_info[1]
+                sip_did_backup_string = "[leg_timeout="..didinfo['leg_timeout'].."]sofia/${sofia_profile_name}/"..destination_number_translated.."@"..sip_did_backup_info[1]
             end
             table.insert(xml, [[<action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,NO_ROUTE_DESTINATION,USER_NOT_REGISTERED"/>]])
         end

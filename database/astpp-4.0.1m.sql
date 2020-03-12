@@ -1,0 +1,1 @@
+ALTER TABLE `dids` ADD `prepend_suffix` VARCHAR(10) NULL, ADD `prepend_prefix` VARCHAR(10) NULL;
