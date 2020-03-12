@@ -397,15 +397,15 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     -- Update destination number in a case of suffix/prefix existing
 
     destination_number_translated = destination_number
-    if (didinfo['prepend_prefix'] and didinfo['prepend_prefix'] ~= "") {
+    if (didinfo['prepend_prefix'] and didinfo['prepend_prefix'] ~= "") then
         destination_number_translated = didinfo['prepend_prefix'] .. destination_number_translated
         Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
-    }
+    end
 
-    if (didinfo['prepend_suffix'] and didinfo['prepend_suffix'] ~= "") {
+    if (didinfo['prepend_suffix'] and didinfo['prepend_suffix'] ~= "") then
         destination_number_translated = destination_number_translated .. didinfo['prepend_suffix']
         Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
-    }
+    end
 
     table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]])
 
