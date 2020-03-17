@@ -75,14 +75,14 @@ function check_did(destination_number,config)
         -- @TODO: Apply localization logic for DID global translation
         if (did_localization ~= nil) then
             did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
-            destination_number = do_number_translation(did_localization['number_originate'],destination_number)
+            destination_number = do_number_translation(did_localization['number_originate'], destination_number)
         end
     end
     -- 4.0.1 Original function
     -- local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE B.status=0 AND B.deleted=0 AND B.id=A.accountid AND A.number =\"" ..destination_number .."\" LIMIT 1";
 
     -- Version from 3.0m	   
-       local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
+    local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.localization_id FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
 
     Logger.debug("[CHECK_DID_OVERRIDE] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -95,6 +95,18 @@ function check_did(destination_number,config)
             didinfo['did_cid_translation'] = ""
         end
     end))
+
+    if (didinfo and didinfo['localization_id'] ~= nil and didinfo['localization_id'] ~= '') then
+        Logger.debug("[CHECK_DID_OVERRIDE] DID is configured to use localization :" .. didinfo['localization_id'])
+        did_localization = get_localization(didinfo['localization_id'] ,'O')
+        if (did_localization) then
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on in_caller_id_originate :" .. did_localization['in_caller_id_originate'])
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on out_caller_id_originate :" .. did_localization['out_caller_id_originate'])
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on number_originate :" .. did_localization['number_originate'])
+        end
+
+    end
+
     return didinfo;
 end
 
@@ -104,16 +116,13 @@ function check_did_reseller(destination_number,userinfo,config)
 
     Logger.notice("[CHECK_DID_RESELLER_OVERRIDE]: Start")
 
-    local number_translation 
-    number_translation = config['did_global_translation'];
-
-    destination_number = do_number_translation(number_translation,destination_number)   
+    destination_number = do_number_translation(config['did_global_translation'], destination_number)   
     
     --	4.0.1 Original function
     --	local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE A.number = \"" ..destination_number .."\"  AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND B.note =\"" ..destination_number .."\"";
 
     -- Version from 3.0m
-    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
+    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.localization_id FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
 
     Logger.debug("[CHECK_DID_RESELLER_OVERRIDE] Query :" .. query)
 
@@ -121,7 +130,144 @@ function check_did_reseller(destination_number,userinfo,config)
         didinfo = u;
     end))
 
+    if (didinfo and didinfo['localization_id'] ~= nil and didinfo['localization_id'] ~= '') then
+        Logger.debug("[CHECK_DID_OVERRIDE] DID is configured to use localization :" .. didinfo['localization_id'])
+        local did_localization = get_localization(didinfo['localization_id'] ,'O')
+        if (did_localization) then
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on in_caller_id_originate :" .. did_localization['in_caller_id_originate'])
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on out_caller_id_originate :" .. did_localization['out_caller_id_originate'])
+            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on number_originate :" .. did_localization['number_originate'])
+        end
+
+    end
+
     return didinfo;
+end
+
+
+-- Freeswitch XML Header OVERRIDE
+function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config,xml_did_rates,reseller_cc_limit,callerid_array,original_destination_number)
+    local callstart = os.date("!%Y-%m-%d %H:%M:%S")
+    
+    Logger.notice("[FREESWITCH_XML_HEADER_OVERRIDE]: Start")
+
+	table.insert(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
+	table.insert(xml, [[<document type="freeswitch/xml">]])
+	table.insert(xml, [[<section name="dialplan" description="ASTPP Dialplan">]])
+	table.insert(xml, [[<context name="]]..params:getHeader("Caller-Context")..[[">]])
+	table.insert(xml, [[<extension name="]]..destination_number..[[">]]);
+	table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]])
+	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]])
+	Logger.info("maxlength::::::::: "..maxlength);
+	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_app=sched_hangup"/>]])
+	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_data=+]]..((maxlength) * 60)..[[ normal_clearing"/>]])
+   
+    if (call_direction == "outbound" and config['realtime_billing'] == "0") then
+        table.insert(xml, [[<action application="set" data="nibble_account=]]..customer_userinfo["nibble_accounts"]..[["/>]])
+        table.insert(xml, [[<action application="set" data="nibble_rate=]]..customer_userinfo["nibble_rates"]..[["/>]])
+        table.insert(xml, [[<action application="set" data="nibble_init_inc=]]..customer_userinfo["nibble_init_inc"]..[["/>]])
+        table.insert(xml, [[<action application="set" data="nibble_inc=]]..customer_userinfo["nibble_inc"]..[["/>]])
+        table.insert(xml, [[<action application="set" data="nibble_connectcost=]]..customer_userinfo["nibble_connect_cost"]..[["/>]])
+        table.insert(xml, [[<action application="nibblebill" data="heartbeat 30"/>]])
+    end
+    
+    -- Add X-Call-ID header if it's not present. Used to identify calls on both legs
+    if (params:getHeader("variable_sip_h_X-Call-ID") == nil) {
+        table.insert(xml, [[<action application="set" data="sip_h_X-Call-ID=${uuid}"/>]])
+    }
+
+	table.insert(xml, [[<action application="set" data="callstart=]]..callstart..[["/>]]);
+	table.insert(xml, [[<action application="set" data="hangup_after_bridge=true"/>]]);
+
+	-- Made it configurable if someone want to set continue_on_fail for specific disposition	
+	local continue_on_fail = '!USER_BUSY'
+	if (config['continue_on_fail'] ~= nil) then
+		continue_on_fail = config['continue_on_fail']
+	end
+
+	table.insert(xml, [[<action application="set" data="continue_on_fail=TRUE"/>]]);  
+	--table.insert(xml, [[<action application="set" data="ignore_early_media=true"/>]]);       
+
+	table.insert(xml, [[<action application="set" data="account_id=]]..customer_userinfo['id']..[["/>]]);              
+	table.insert(xml, [[<action application="set" data="parent_id=]]..customer_userinfo['reseller_id']..[["/>]]);
+	table.insert(xml, [[<action application="set" data="entity_id=]]..customer_userinfo['type']..[["/>]]);
+	table.insert(xml, [[<action application="set" data="call_processed=internal"/>]]);    
+	table.insert(xml, [[<action application="set" data="call_direction=]]..call_direction..[["/>]]); 	
+	table.insert(xml, [[<action application="set" data="accountname=]]..accountname..[["/>]]);
+	if (package_id and tonumber(package_id) > 0) then
+		table.insert(xml, [[<action application="set" data="package_id=]]..package_id..[["/>]]);              
+	end
+	if (call_direction == "inbound" and tonumber(config['inbound_fax']) > 0) then
+		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
+		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
+		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
+	elseif (call_direction == "outbound" and tonumber(config['outbound_fax']) > 0) then
+		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
+		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
+		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
+	end
+	--custom outbound        
+	if custom_outbound then custom_outbound(xml) end 
+
+	if(tonumber(config['balance_announce']) == 0) then
+		table.insert(xml, [[<action application="sleep" data="1000"/>]]);
+		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-card-has-a-balance-of.wav"/>]]);
+		local tmp_prefix=''
+		if get_international_balance_prefix then tmp_prefix = get_international_balance_prefix(customer_userinfo) end 	
+
+		customer_balance = tonumber(customer_userinfo['posttoexternal']) == 1 and tonumber(customer_userinfo[tmp_prefix..'credit_limit'])+(tonumber(customer_userinfo[tmp_prefix..'balance'])*(-1)) or tonumber(customer_userinfo[tmp_prefix..'balance'])
+
+		table.insert(xml, [[<action application="say" data="en CURRENCY PRONOUNCED ]].. customer_balance..[["/>]]);
+
+	end
+	if(tonumber(config['minutes_announce']) == 0) then
+		table.insert(xml, [[<action application="sleep" data="500"/>]]);
+		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-call-will-last.wav"/>]]);
+		table.insert(xml, [[<action application="say" data="en NUMBER PRONOUNCED ]].. math.floor(maxlength)..[["/>]]);
+		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-minute.wav"/>]]);       
+	end
+    
+	if (call_direction == "inbound") then 
+		table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_user_rates..[["/>]]);
+	else
+		table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_user_rates..[["/>]]);
+	end
+
+	if(xml_did_rates ~= nil and xml_did_rates ~= '') then
+		table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_did_rates..[["/>]]);
+	end
+	
+	-- Set original caller id for CDRS
+    if (callerid_array['original_cid_name'] ~= '' and callerid_array['original_cid_name'] ~= '<null>')  then
+            table.insert(xml, [[<action application="set" data="original_caller_id_name=]]..callerid_array['original_cid_name']..[["/>]]);
+    end
+    if (callerid_array['cid_number'] ~= '' and callerid_array['cid_number'] ~= '<null>')  then
+            table.insert(xml, [[<action application="set" data="original_caller_id_number=]]..callerid_array['original_cid_number']..[["/>]]);
+    end
+       
+	-- Set max channel limit for user if > 0
+	if(tonumber(customer_userinfo['maxchannels']) > 0) then    		
+	    	table.insert(xml, [[<action application="limit" data="db ]]..accountcode..[[ user_]]..accountcode..[[ ]]..customer_userinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);
+	end
+
+	-- Set CPS limit for user if > 0
+	if (tonumber(customer_userinfo['cps']) > 0) then
+		table.insert(xml, [[<action application="limit" data="hash CPS_]]..accountcode..[[ CPS_user_]]..accountcode..[[ ]]..customer_userinfo['cps']..[[/1 !SWITCH_CONGESTION"/>]]);
+	end
+
+    -- Set max channel limit for resellers
+    if (reseller_cc_limit ~= nil) then
+        table.insert(xml, reseller_cc_limit);
+    end   
+
+	if(tonumber(customer_userinfo['is_recording']) == 0) then 
+		table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
+		table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
+		table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
+		table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
+		table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
+	end
+	return xml
 end
 
 -- Dialplan for outbound calls OVERRIDE
@@ -145,8 +291,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
         -------------- Destination number translation ---------
         tr_localization['number_terminate'] = tr_localization['number_terminate']:gsub(" ", "")
         temp_destination_number = do_number_translation(tr_localization['number_terminate'],destination_number)
-        -----------------------------------
-        
+        ----------------------------------- 
     end
 
     if(outbound_info['prepend'] ~= '' or outbound_info['strip'] ~= '') then
@@ -393,19 +538,6 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
-
-    -- Update destination number in a case of suffix/prefix existing
-
-    destination_number_translated = destination_number
-    if (didinfo['prepend_prefix'] and didinfo['prepend_prefix'] ~= "") then
-        destination_number_translated = didinfo['prepend_prefix'] .. destination_number_translated
-        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
-    end
-
-    if (didinfo['prepend_suffix'] and didinfo['prepend_suffix'] ~= "") then
-        destination_number_translated = destination_number_translated .. didinfo['prepend_suffix']
-        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
-    end
 
     table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]])
 

@@ -1,1 +1,1 @@
-ALTER TABLE `dids` ADD `prepend_suffix` VARCHAR(10) NULL, ADD `prepend_prefix` VARCHAR(10) NULL;
+ALTER TABLE `dids` ADD `localization_id` int(3) NULL;
