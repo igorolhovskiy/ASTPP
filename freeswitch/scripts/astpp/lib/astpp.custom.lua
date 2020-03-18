@@ -151,16 +151,16 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
     
     Logger.notice("[FREESWITCH_XML_HEADER_OVERRIDE]: Start")
 
-	table.insert(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
-	table.insert(xml, [[<document type="freeswitch/xml">]])
-	table.insert(xml, [[<section name="dialplan" description="ASTPP Dialplan">]])
-	table.insert(xml, [[<context name="]]..params:getHeader("Caller-Context")..[[">]])
-	table.insert(xml, [[<extension name="]]..destination_number..[[">]]);
-	table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]])
-	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]])
-	Logger.info("maxlength::::::::: "..maxlength);
-	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_app=sched_hangup"/>]])
-	table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_data=+]]..((maxlength) * 60)..[[ normal_clearing"/>]])
+    table.insert(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
+    table.insert(xml, [[<document type="freeswitch/xml">]])
+    table.insert(xml, [[<section name="dialplan" description="ASTPP Dialplan">]])
+    table.insert(xml, [[<context name="]]..params:getHeader("Caller-Context")..[[">]])
+    table.insert(xml, [[<extension name="]]..destination_number..[[">]]);
+    table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]])
+    table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]])
+    Logger.info("maxlength::::::::: "..maxlength);
+    table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_app=sched_hangup"/>]])
+    table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_data=+]]..((maxlength) * 60)..[[ normal_clearing"/>]])
    
     if (call_direction == "outbound" and config['realtime_billing'] == "0") then
         table.insert(xml, [[<action application="set" data="nibble_account=]]..customer_userinfo["nibble_accounts"]..[["/>]])
@@ -172,72 +172,72 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
     end
     
     -- Add X-Call-ID header if it's not present. Used to identify calls on both legs
-    if (params:getHeader("variable_sip_h_X-Call-ID") == nil) {
-        table.insert(xml, [[<action application="set" data="sip_h_X-Call-ID=${uuid}"/>]])
-    }
+    if (params:getHeader("variable_sip_h_X-Call-ID") == "" or params:getHeader("variable_sip_h_X-Call-ID") == nil) then
+        table.insert(xml, [[<action application="set" data="sip_h_X-Call-ID=${sip_call_id}"/>]])
+    end
 
-	table.insert(xml, [[<action application="set" data="callstart=]]..callstart..[["/>]]);
-	table.insert(xml, [[<action application="set" data="hangup_after_bridge=true"/>]]);
+    table.insert(xml, [[<action application="set" data="callstart=]]..callstart..[["/>]]);
+    table.insert(xml, [[<action application="set" data="hangup_after_bridge=true"/>]]);
 
-	-- Made it configurable if someone want to set continue_on_fail for specific disposition	
-	local continue_on_fail = '!USER_BUSY'
-	if (config['continue_on_fail'] ~= nil) then
-		continue_on_fail = config['continue_on_fail']
-	end
+    -- Made it configurable if someone want to set continue_on_fail for specific disposition	
+    local continue_on_fail = '!USER_BUSY'
+    if (config['continue_on_fail'] ~= nil) then
+        continue_on_fail = config['continue_on_fail']
+    end
 
-	table.insert(xml, [[<action application="set" data="continue_on_fail=TRUE"/>]]);  
-	--table.insert(xml, [[<action application="set" data="ignore_early_media=true"/>]]);       
+    table.insert(xml, [[<action application="set" data="continue_on_fail=TRUE"/>]]);  
+    --table.insert(xml, [[<action application="set" data="ignore_early_media=true"/>]]);       
 
-	table.insert(xml, [[<action application="set" data="account_id=]]..customer_userinfo['id']..[["/>]]);              
-	table.insert(xml, [[<action application="set" data="parent_id=]]..customer_userinfo['reseller_id']..[["/>]]);
-	table.insert(xml, [[<action application="set" data="entity_id=]]..customer_userinfo['type']..[["/>]]);
-	table.insert(xml, [[<action application="set" data="call_processed=internal"/>]]);    
-	table.insert(xml, [[<action application="set" data="call_direction=]]..call_direction..[["/>]]); 	
-	table.insert(xml, [[<action application="set" data="accountname=]]..accountname..[["/>]]);
-	if (package_id and tonumber(package_id) > 0) then
-		table.insert(xml, [[<action application="set" data="package_id=]]..package_id..[["/>]]);              
-	end
-	if (call_direction == "inbound" and tonumber(config['inbound_fax']) > 0) then
-		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
-		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
-		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
-	elseif (call_direction == "outbound" and tonumber(config['outbound_fax']) > 0) then
-		table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
-		table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
-		table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
-	end
-	--custom outbound        
-	if custom_outbound then custom_outbound(xml) end 
+    table.insert(xml, [[<action application="set" data="account_id=]]..customer_userinfo['id']..[["/>]]);              
+    table.insert(xml, [[<action application="set" data="parent_id=]]..customer_userinfo['reseller_id']..[["/>]]);
+    table.insert(xml, [[<action application="set" data="entity_id=]]..customer_userinfo['type']..[["/>]]);
+    table.insert(xml, [[<action application="set" data="call_processed=internal"/>]]);    
+    table.insert(xml, [[<action application="set" data="call_direction=]]..call_direction..[["/>]]); 	
+    table.insert(xml, [[<action application="set" data="accountname=]]..accountname..[["/>]]);
+    if (package_id and tonumber(package_id) > 0) then
+        table.insert(xml, [[<action application="set" data="package_id=]]..package_id..[["/>]]);              
+    end
+    if (call_direction == "inbound" and tonumber(config['inbound_fax']) > 0) then
+        table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
+        table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
+        table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
+    elseif (call_direction == "outbound" and tonumber(config['outbound_fax']) > 0) then
+        table.insert(xml, [[<action application="export" data="t38_passthru=true"/>]]);    
+        table.insert(xml, [[<action application="set" data="fax_enable_t38=true"/>]]);    
+        table.insert(xml, [[<action application="set" data="fax_enable_t38_request=true"/>]]);    
+    end
+    --custom outbound        
+    if custom_outbound then custom_outbound(xml) end 
 
-	if(tonumber(config['balance_announce']) == 0) then
-		table.insert(xml, [[<action application="sleep" data="1000"/>]]);
-		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-card-has-a-balance-of.wav"/>]]);
-		local tmp_prefix=''
-		if get_international_balance_prefix then tmp_prefix = get_international_balance_prefix(customer_userinfo) end 	
+    if(tonumber(config['balance_announce']) == 0) then
+        table.insert(xml, [[<action application="sleep" data="1000"/>]]);
+        table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-card-has-a-balance-of.wav"/>]]);
+        local tmp_prefix=''
+        if get_international_balance_prefix then tmp_prefix = get_international_balance_prefix(customer_userinfo) end 	
 
-		customer_balance = tonumber(customer_userinfo['posttoexternal']) == 1 and tonumber(customer_userinfo[tmp_prefix..'credit_limit'])+(tonumber(customer_userinfo[tmp_prefix..'balance'])*(-1)) or tonumber(customer_userinfo[tmp_prefix..'balance'])
+        customer_balance = tonumber(customer_userinfo['posttoexternal']) == 1 and tonumber(customer_userinfo[tmp_prefix..'credit_limit'])+(tonumber(customer_userinfo[tmp_prefix..'balance'])*(-1)) or tonumber(customer_userinfo[tmp_prefix..'balance'])
 
-		table.insert(xml, [[<action application="say" data="en CURRENCY PRONOUNCED ]].. customer_balance..[["/>]]);
+        table.insert(xml, [[<action application="say" data="en CURRENCY PRONOUNCED ]].. customer_balance..[["/>]]);
 
-	end
-	if(tonumber(config['minutes_announce']) == 0) then
-		table.insert(xml, [[<action application="sleep" data="500"/>]]);
-		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-call-will-last.wav"/>]]);
-		table.insert(xml, [[<action application="say" data="en NUMBER PRONOUNCED ]].. math.floor(maxlength)..[["/>]]);
-		table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-minute.wav"/>]]);       
-	end
+    end
+    if(tonumber(config['minutes_announce']) == 0) then
+        table.insert(xml, [[<action application="sleep" data="500"/>]]);
+        table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-this-call-will-last.wav"/>]]);
+        table.insert(xml, [[<action application="say" data="en NUMBER PRONOUNCED ]].. math.floor(maxlength)..[["/>]]);
+        table.insert(xml, [[<action application="playback" data="/usr/share/freeswitch/sounds/en/us/callie/astpp-minute.wav"/>]]);       
+    end
     
-	if (call_direction == "inbound") then 
-		table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_user_rates..[["/>]]);
-	else
-		table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_user_rates..[["/>]]);
-	end
+    if (call_direction == "inbound") then 
+        table.insert(xml, [[<action application="set" data="origination_rates_did=]]..xml_user_rates..[["/>]]);
+    else
+        table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_user_rates..[["/>]]);
+    end
 
-	if(xml_did_rates ~= nil and xml_did_rates ~= '') then
-		table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_did_rates..[["/>]]);
-	end
-	
-	-- Set original caller id for CDRS
+    if(xml_did_rates ~= nil and xml_did_rates ~= '') then
+        table.insert(xml, [[<action application="set" data="origination_rates=]]..xml_did_rates..[["/>]]);
+    end
+    
+    -- Set original caller id for CDRS
     if (callerid_array['original_cid_name'] ~= '' and callerid_array['original_cid_name'] ~= '<null>')  then
             table.insert(xml, [[<action application="set" data="original_caller_id_name=]]..callerid_array['original_cid_name']..[["/>]]);
     end
@@ -245,29 +245,29 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
             table.insert(xml, [[<action application="set" data="original_caller_id_number=]]..callerid_array['original_cid_number']..[["/>]]);
     end
        
-	-- Set max channel limit for user if > 0
-	if(tonumber(customer_userinfo['maxchannels']) > 0) then    		
-	    	table.insert(xml, [[<action application="limit" data="db ]]..accountcode..[[ user_]]..accountcode..[[ ]]..customer_userinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);
-	end
+    -- Set max channel limit for user if > 0
+    if(tonumber(customer_userinfo['maxchannels']) > 0) then    		
+            table.insert(xml, [[<action application="limit" data="db ]]..accountcode..[[ user_]]..accountcode..[[ ]]..customer_userinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);
+    end
 
-	-- Set CPS limit for user if > 0
-	if (tonumber(customer_userinfo['cps']) > 0) then
-		table.insert(xml, [[<action application="limit" data="hash CPS_]]..accountcode..[[ CPS_user_]]..accountcode..[[ ]]..customer_userinfo['cps']..[[/1 !SWITCH_CONGESTION"/>]]);
-	end
+    -- Set CPS limit for user if > 0
+    if (tonumber(customer_userinfo['cps']) > 0) then
+        table.insert(xml, [[<action application="limit" data="hash CPS_]]..accountcode..[[ CPS_user_]]..accountcode..[[ ]]..customer_userinfo['cps']..[[/1 !SWITCH_CONGESTION"/>]]);
+    end
 
     -- Set max channel limit for resellers
     if (reseller_cc_limit ~= nil) then
-        table.insert(xml, reseller_cc_limit);
+        table.insert(xml, reseller_cc_limit)
     end   
 
-	if(tonumber(customer_userinfo['is_recording']) == 0) then 
-		table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
-		table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
-		table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
-		table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
-		table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
-	end
-	return xml
+    if(tonumber(customer_userinfo['is_recording']) == 0) then 
+        table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
+        table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
+        table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
+        table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
+        table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
+    end
+    return xml
 end
 
 -- Dialplan for outbound calls OVERRIDE
@@ -587,6 +587,50 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     return xml;
 end
 
+
+-- Dialplan for inbound calls
+function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates,callerid_array,livecall_data)
+
+
+    Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Start...")
+
+    local is_local_extension = "0"
+    
+    callerid_array['cid_name'] = do_number_translation(didinfo['did_cid_translation'],callerid_array['cid_name'])
+    callerid_array['cid_number'] = do_number_translation(didinfo['did_cid_translation'],callerid_array['cid_number'])
+    
+    if (tonumber(didinfo['maxchannels']) > 0) then    		
+        table.insert(xml, [[<action application="limit" data="db ]]..didinfo['accountid']..[[ user_]]..didinfo['accountid']..[[ ]]..didinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);
+    end
+    
+    if (tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['in_caller_id_originate'] ~= nil) then     
+        callerid_array['cid_name'] = do_number_translation(or_localization['in_caller_id_originate'],callerid_array['cid_name'])
+        callerid_array['cid_number'] = do_number_translation(or_localization['in_caller_id_originate'],callerid_array['cid_number'])
+    end
+
+    xml = freeswitch_xml_callerid(xml, callerid_array)
+
+    table.insert(xml, [[<action application="set" data="receiver_accid=]]..didinfo['accountid']..[["/>]])
+    
+    if(tonumber(didinfo['maxchannels']) > 0) then    
+        table.insert(xml, [[<action application="limit" data="db ]]..destination_number..[[ did_]]..destination_number..[[ ]]..didinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);        
+    end
+    
+    if callerid_lookup_dialplan then 
+        callerid_lookup_dialplan(xml,didinfo) 
+    end
+
+    table.insert(xml, [[<action application="export" data="presence_data=]]..livecall_data..[[||||||DID"/>]])
+    table.insert(xml, [[<action application="export" data="call_type=]]..didinfo['call_type']..[["/>]])
+    
+    local custom_function_name = "custom_inbound_"..didinfo['call_type']
+    
+    Logger.debug("[FREESWITCH_XML_INBOUND_OVERRIDE] Calling " .. custom_function_name)
+    
+    _G[custom_function_name](xml,didinfo,userinfo,config,xml_did_rates,callerid_array,livecall_data) -- calls function from the global namespace
+    
+    return xml
+end
 
 -- Get carrier rates OVERRIDE
 function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rate_carrier_id, routing_type)
