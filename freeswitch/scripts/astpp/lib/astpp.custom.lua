@@ -145,11 +145,36 @@ function check_did_reseller(destination_number,userinfo,config)
 end
 
 
+-- Get localization override for more extensive logging
+
+function get_localization(id, type)
+
+    Logger.notice("[GET_LOCALIZATION_OVERRIDE]: Start " .. (id or "NONE") .. "/" .. (type or "NONE"))
+
+	local localization = nil
+    local query
+    
+	if (type=="O") then
+		query = "SELECT id,in_caller_id_originate,out_caller_id_originate,number_originate FROM "..TBL_LOCALIZATION.." WHERE id = "..id.. " AND status=0 limit 1 ";
+	elseif(type=="T") then
+		query = "SELECT id,out_caller_id_terminate,number_terminate FROM "..TBL_LOCALIZATION.." WHERE id=(SELECT localization_id from accounts where id = "..id.. ") AND status=0 limit 1 ";
+    end
+    
+    Logger.debug("[GET_LOCALIZATION_OVERRIDE] Query :" .. query)
+
+    assert (dbh:query(query, function(u)
+    	localization = u
+    end))
+
+    return localization
+end
+
 -- Freeswitch XML Header OVERRIDE
 function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config,xml_did_rates,reseller_cc_limit,callerid_array,original_destination_number)
     local callstart = os.date("!%Y-%m-%d %H:%M:%S")
     
     Logger.notice("[FREESWITCH_XML_HEADER_OVERRIDE]: Start")
+    Logger.info("[FREESWITCH_XML_HEADER_OVERRIDE] Call max lenght: " .. maxlength)
 
     table.insert(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
     table.insert(xml, [[<document type="freeswitch/xml">]])
@@ -158,7 +183,6 @@ function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call
     table.insert(xml, [[<extension name="]]..destination_number..[[">]]);
     table.insert(xml, [[<condition field="destination_number" expression="]]..plus_destination_number(params:getHeader("Caller-Destination-Number"))..[[">]])
     table.insert(xml, [[<action application="set" data="effective_destination_number=]]..plus_destination_number(original_destination_number)..[["/>]])
-    Logger.info("maxlength::::::::: "..maxlength);
     table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_app=sched_hangup"/>]])
     table.insert(xml, [[<action application="set" data="bridge_pre_execute_bleg_data=+]]..((maxlength) * 60)..[[ normal_clearing"/>]])
    
@@ -589,10 +613,10 @@ end
 
 
 -- Dialplan for inbound calls
-function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates,callerid_array,livecall_data)
+function freeswitch_xml_inbound(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
 
 
-    Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Start...")
+    Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Start")
 
     local is_local_extension = "0"
     
@@ -603,9 +627,21 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates,caller
         table.insert(xml, [[<action application="limit" data="db ]]..didinfo['accountid']..[[ user_]]..didinfo['accountid']..[[ ]]..didinfo['maxchannels']..[[ !SWITCH_CONGESTION"/>]]);
     end
     
-    if (tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['in_caller_id_originate'] ~= nil) then     
-        callerid_array['cid_name'] = do_number_translation(or_localization['in_caller_id_originate'],callerid_array['cid_name'])
-        callerid_array['cid_number'] = do_number_translation(or_localization['in_caller_id_originate'],callerid_array['cid_number'])
+    if (tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['in_caller_id_originate'] ~= nil) then
+
+        Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Do CallerID localization " .. or_localization['in_caller_id_originate'])
+
+        callerid_array['cid_name'] = do_number_translation(or_localization['in_caller_id_originate'], callerid_array['cid_name'])
+        callerid_array['cid_number'] = do_number_translation(or_localization['in_caller_id_originate'], callerid_array['cid_number'])
+
+    elseif (tonumber(userinfo['localization_id']) > 0) then
+
+        Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] User localization is present " .. userinfo['localization_id'])
+        if or_localization then
+            Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] or_localization is present")
+        else
+            Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] or_localization is not present")
+        end
     end
 
     xml = freeswitch_xml_callerid(xml, callerid_array)
@@ -626,8 +662,13 @@ function freeswitch_xml_inbound(xml,didinfo,userinfo,config,xml_did_rates,caller
     local custom_function_name = "custom_inbound_"..didinfo['call_type']
     
     Logger.debug("[FREESWITCH_XML_INBOUND_OVERRIDE] Calling " .. custom_function_name)
-    
-    _G[custom_function_name](xml,didinfo,userinfo,config,xml_did_rates,callerid_array,livecall_data) -- calls function from the global namespace
+
+    if (_G[custom_function_name] ~= nil) then
+        _G[custom_function_name](xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data) -- calls function from the global namespace
+    else
+        Logger.error("[FREESWITCH_XML_INBOUND_OVERRIDE] Function " .. custom_function_name .. " is not present!")
+        table.insert(xml, [[action application="hangup" data="SWITCH_CONGESTION"/>]])
+    end
     
     return xml
 end
