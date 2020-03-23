@@ -760,15 +760,15 @@ end
 -- Check avilable DID info 
 function is_did_orphaned(destination_number,config)
 
-    Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start...")
+    Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start")
 
     local did_localization = nil 
     local check_did_info = ""
     if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
-        did_localization = get_localization(config['did_global_translation'],'O')
+        did_localization = get_localization(config['did_global_translation'], 'O')
         if (did_localization ~= nil) then
             did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
-            destination_number = do_number_translation(did_localization['number_originate'],destination_number)
+            destination_number = do_number_translation(did_localization['number_originate'], destination_number)
         end
     end
     
