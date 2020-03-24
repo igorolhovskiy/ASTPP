@@ -98,7 +98,7 @@ function check_did(destination_number,config)
 
     if (didinfo and didinfo['localization_id'] ~= nil and didinfo['localization_id'] ~= '') then
         Logger.debug("[CHECK_DID_OVERRIDE] DID is configured to use localization :" .. didinfo['localization_id'])
-        did_localization = get_localization(didinfo['localization_id'] ,'O')
+        did_localization = get_localization(didinfo['localization_id'], 'O')
         if (did_localization) then
             Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on in_caller_id_originate :" .. did_localization['in_caller_id_originate'])
             Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on out_caller_id_originate :" .. did_localization['out_caller_id_originate'])
@@ -551,7 +551,7 @@ function do_number_translation(number_translation, destination_number)
         return destination_number
         end
     end
-    
+
     return destination_number
 end
 
