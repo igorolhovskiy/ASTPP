@@ -82,7 +82,7 @@ function check_did(destination_number,config)
     -- local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE B.status=0 AND B.deleted=0 AND B.id=A.accountid AND A.number =\"" ..destination_number .."\" LIMIT 1";
 
     -- Version from 3.0m	   
-    local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.localization_id FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
+    local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.localization_id,A.prepend_prefix,A.prepend_suffix FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
 
     Logger.debug("[CHECK_DID_OVERRIDE] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -122,8 +122,8 @@ function check_did_reseller(destination_number,userinfo,config)
     --	local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE A.number = \"" ..destination_number .."\"  AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND B.note =\"" ..destination_number .."\"";
 
     -- Version from 3.0m
-    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.localization_id FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
-
+    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.localization_id,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
+    
     Logger.debug("[CHECK_DID_RESELLER_OVERRIDE] Query :" .. query)
 
     assert (dbh:query(query, function(u)
@@ -154,8 +154,10 @@ function get_localization(id, type)
 	local localization = nil
     local query
     
+    -- O for origination
 	if (type=="O") then
-		query = "SELECT id,in_caller_id_originate,out_caller_id_originate,number_originate FROM "..TBL_LOCALIZATION.." WHERE id = "..id.. " AND status=0 limit 1 ";
+        query = "SELECT id,in_caller_id_originate,out_caller_id_originate,number_originate FROM "..TBL_LOCALIZATION.." WHERE id = "..id.. " AND status=0 limit 1 ";
+    -- T for termination
 	elseif(type=="T") then
 		query = "SELECT id,out_caller_id_terminate,number_terminate FROM "..TBL_LOCALIZATION.." WHERE id=(SELECT localization_id from accounts where id = "..id.. ") AND status=0 limit 1 ";
     end
@@ -301,6 +303,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
 
     local temp_destination_number = destination_number
     local tr_localization=nil
+
     tr_localization = get_localization(outbound_info['provider_id'],'T')
 
     
@@ -509,35 +512,46 @@ end
 
 -- Do number translation OVERRIDE. Use only first occurance
 function do_number_translation(number_translation, destination_number)
-    local tmp
 
-    tmp = split(number_translation, ",")
-    for tmp_key, tmp_value in pairs(tmp) do
-      tmp_value = string.gsub(tmp_value, "\"", "")
-      tmp_str = split(tmp_value, "/")      
-      if(tmp_str[1] == '' or tmp_str[1] == nil)	then
-        return destination_number
-      end
-      local prefix = string.sub(destination_number, 0, string.len(tmp_str[1]));
-      if (prefix == tmp_str[1] or tmp_str[1] == '*') then
-        Logger.notice("[DO_NUMBER_TRANSLATION_OVERRIDE] Before Localization CLI/DST : " .. destination_number)
-        if(tmp_str[2] ~= nil) then
-            if (tmp_str[2] == '*') then
-                destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
-            else
-                if (tmp_str[1] == '*') then
-                    destination_number = tmp_str[2] .. destination_number
-                else
-                    destination_number = tmp_str[2] .. string.sub(destination_number, (string.len(tmp_str[1])+1))
-                end
-            end
-        else
-            destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
+    local tmp = number_translation:split(',')
+
+    for local tmp_key, tmp_value in pairs(tmp) do
+
+        tmp_value = tmp_value:gsub("\"", "")
+
+        if tmp_value:sub(1, 1) == "/" then
+            tmp_value = "*" .. tmp_value
         end
+
+        tmp_str = split(tmp_value, "/")
+
+        if(tmp_str[1] == '' or tmp_str[1] == nil) then
+            return destination_number
+        end
+
+        local prefix = string.sub(destination_number, 0, string.len(tmp_str[1]));
+
+        if (prefix == tmp_str[1] or tmp_str[1] == '*') then
+            Logger.notice("[DO_NUMBER_TRANSLATION_OVERRIDE] Before Localization CLI/DST : " .. destination_number)
+            if(tmp_str[2] ~= nil) then
+                if (tmp_str[2] == '*') then
+                    destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
+                else
+                    if (tmp_str[1] == '*') then
+                        destination_number = tmp_str[2] .. destination_number
+                    else
+                        destination_number = tmp_str[2] .. string.sub(destination_number, (string.len(tmp_str[1])+1))
+                    end
+                end
+            else
+                destination_number = string.sub(destination_number, (string.len(tmp_str[1])+1))
+            end
         Logger.notice("[DO_NUMBER_TRANSLATION_OVERRIDE] After Localization CLI/DST : " .. destination_number)
+
         return destination_number
-      end
+        end
     end
+    
     return destination_number
 end
 
@@ -551,7 +565,6 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     local deli_str = {}
     local sip_did_backup_info
     local sip_did_backup_string
-    local destination_number_translated
 
     Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Processing " .. didinfo['extensions'])
 
@@ -562,6 +575,18 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
 
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
+
+    local destination_number_translated = destination_number
+
+    if (didinfo['prepend_prefix'] and didinfo['prepend_prefix'] ~= "") then
+        destination_number_translated = didinfo['prepend_prefix'] .. destination_number_translated
+        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
+    end
+
+    if (didinfo['prepend_suffix'] and didinfo['prepend_suffix'] ~= "") then
+        destination_number_translated = destination_number_translated .. didinfo['prepend_suffix']
+        Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Change destination number to " .. destination_number_translated)
+    end    
 
     table.insert(xml, [[<action application="set" data="calltype=SIP-DID"/>]])
 
