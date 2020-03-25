@@ -271,8 +271,8 @@ if (userinfo ~= nil) then
 
 	if(call_direction == 'inbound' and config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
 		-- @TODO: Implement localization for DID global translation
-		--destination_number = do_number_translation(config['did_global_translation'],destination_number)
-		destination_number = didinfo['did_number']
+		destination_number = do_number_translation(config['did_global_translation'],destination_number)
+		--destination_number = didinfo['did_number']
 	end     
 
   	number_loop_str = number_loop(destination_number)
