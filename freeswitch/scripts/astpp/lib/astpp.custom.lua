@@ -70,19 +70,20 @@ function check_did(destination_number,config)
     Logger.notice("[CHECK_DID_OVERRIDE]: Start")
 
     local did_localization = nil 
+    local tmp_destination_number = destination_number
     if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
         did_localization = get_localization(config['did_global_translation'],'O')
         -- @TODO: Apply localization logic for DID global translation
         if (did_localization ~= nil) then
             did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
-            destination_number = do_number_translation(did_localization['number_originate'], destination_number)
+            tmp_destination_number = do_number_translation(did_localization['number_originate'], destination_number)
         end
     end
     -- 4.0.1 Original function
     -- local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE B.status=0 AND B.deleted=0 AND B.id=A.accountid AND A.number =\"" ..destination_number .."\" LIMIT 1";
 
     -- Version from 3.0m	   
-    local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.localization_id,A.prepend_prefix,A.prepend_suffix FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
+    local query = "SELECT A.id as id,A.number as did_number,B.id as accountid,B.number as account_code,A.number as did_number,A.connectcost,A.includedseconds,A.cost,A.inc,A.extensions,A.maxchannels,A.call_type,A.city,A.province,A.init_inc,A.leg_timeout,A.status,A.country_id,A.call_type_vm_flag,A.localization_id,A.prepend_prefix,A.prepend_suffix FROM "..TBL_DIDS.." AS A,"..TBL_USERS.." AS B WHERE A.status=0 AND B.status=0 AND B.deleted=0 AND B.id=A.accountid AND "..did_fix_query_austrian("A.number", tmp_destination_number, 5).." ORDER BY LENGTH(A.number) DESC LIMIT 1";
 
     Logger.debug("[CHECK_DID_OVERRIDE] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -96,17 +97,6 @@ function check_did(destination_number,config)
         end
     end))
 
-    if (didinfo and didinfo['localization_id'] ~= nil and didinfo['localization_id'] ~= '') then
-        Logger.debug("[CHECK_DID_OVERRIDE] DID is configured to use localization :" .. didinfo['localization_id'])
-        did_localization = get_localization(didinfo['localization_id'], 'O')
-        if (did_localization) then
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on in_caller_id_originate :" .. did_localization['in_caller_id_originate'])
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on out_caller_id_originate :" .. did_localization['out_caller_id_originate'])
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on number_originate :" .. did_localization['number_originate'])
-        end
-
-    end
-
     return didinfo;
 end
 
@@ -116,30 +106,19 @@ function check_did_reseller(destination_number,userinfo,config)
 
     Logger.notice("[CHECK_DID_RESELLER_OVERRIDE]: Start")
 
-    destination_number = do_number_translation(config['did_global_translation'], destination_number)   
+    local tmp_destination_number = do_number_translation(config['did_global_translation'], destination_number)   
     
     --	4.0.1 Original function
     --	local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE A.number = \"" ..destination_number .."\"  AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND B.note =\"" ..destination_number .."\"";
 
     -- Version from 3.0m
-    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.localization_id,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
+    local query = "SELECT A.id as id, A.number AS number,B.cost AS cost,B.connectcost AS connectcost,B.includedseconds AS includedseconds,B.inc AS inc,A.city AS city,A.province,A.call_type,A.extensions AS extensions,A.maxchannels AS maxchannels,A.init_inc,A.localization_id,A.prepend_suffix,A.prepend_prefix FROM "..TBL_DIDS.." AS A,"..TBL_RESELLER_PRICING.." as B WHERE "..did_fix_query_austrian("A.number", tmp_destination_number, 5).." AND B.type = '1' AND B.reseller_id = \"" ..userinfo['reseller_id'].."\" AND "..did_fix_query_austrian("B.note", tmp_destination_number, 5) .. " ORDER BY LENGTH(A.number) DESC, LENGTH(B.note) DESC";
     
     Logger.debug("[CHECK_DID_RESELLER_OVERRIDE] Query :" .. query)
 
     assert (dbh:query(query, function(u)
         didinfo = u;
     end))
-
-    if (didinfo and didinfo['localization_id'] ~= nil and didinfo['localization_id'] ~= '') then
-        Logger.debug("[CHECK_DID_OVERRIDE] DID is configured to use localization :" .. didinfo['localization_id'])
-        local did_localization = get_localization(didinfo['localization_id'] ,'O')
-        if (did_localization) then
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on in_caller_id_originate :" .. did_localization['in_caller_id_originate'])
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on out_caller_id_originate :" .. did_localization['out_caller_id_originate'])
-            Logger.debug("[CHECK_DID_OVERRIDE] DID localization is holding this on number_originate :" .. did_localization['number_originate'])
-        end
-
-    end
 
     return didinfo;
 end
@@ -783,21 +762,22 @@ function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rat
 end
 
 -- Check avilable DID info 
-function is_did_orphaned(destination_number,config)
+function is_did_orphaned(destination_number, config)
 
     Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start")
 
     local did_localization = nil 
     local check_did_info = ""
+    local tmp_destination_number = destination_number
     if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
         did_localization = get_localization(config['did_global_translation'], 'O')
         if (did_localization ~= nil) then
             did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
-            destination_number = do_number_translation(did_localization['number_originate'], destination_number)
+            tmp_destination_number = do_number_translation(did_localization['number_originate'], destination_number)
         end
     end
     
-    local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", destination_number, 5) .. " AND (accountid = 0 OR status = 1) LIMIT 1";
+    local query = "SELECT * FROM "..TBL_DIDS.." WHERE " .. did_fix_query_austrian("number", tmp_destination_number, 5) .. " AND (accountid = 0 OR status = 1) LIMIT 1";
     Logger.debug("[IS_DID_ORPHANED_OVERRIDE] Query :" .. query)
     assert (dbh:query(query, function(u)
         check_did_info = u;	 
