@@ -1,19 +1,20 @@
 
 function string:split(sep)
+    
     if sep == "" then
         local fields = {}
         table.insert(fields, self)
         return fields
     end
+
     local sep, fields = sep or ",", {}
     local pattern = string.format("([^%s]+)", sep)
+
     self:gsub(pattern, function(c) fields[#fields+1] = c end)
     return fields
  end
 
 function did_fix_query_austrian(field, dialed_number, offset)
-
-    Logger.notice("[DID_FIX_QUERY_AUSTRIAN]: Start")
 
     local num_length = string.len(dialed_number)
     if offset >= num_length then
@@ -31,31 +32,29 @@ end
 --- Get CallerID normalization for support of {ani} and {name} keyword
 function normalize_callerid_ani(callerid)
 
-    Logger.notice("[NORMALIZE_CALLERID_ANI]: Start")
-
     if (callerid ~= nil) then
         callerid_override_name = callerid['cid_name']
         callerid_override_number = callerid['cid_number']
         if (callerid_override_name:find('{ani}')) then
-            Logger.debug("[Functions][NORMALIZE_CALLERID_ANI] {ani} in callerid_name found")
+            Logger.debug("[NORMALIZE_CALLERID_ANI] {ani} in callerid_name found")
             callerid_name = params:getHeader('Caller-Caller-ID-Name') or ""
             callerid_name = callerid_name:match("%d+") or ""
             callerid_override_name = callerid_override_name:gsub("{ani}",callerid_name)
         end
         if (callerid_override_number:find('{name}')) then
-            Logger.debug("[Functions][NORMALIZE_CALLERID_ANI] {name} in callerid_number found")
+            Logger.debug("[NORMALIZE_CALLERID_ANI] {name} in callerid_number found")
             callerid_override_number = callerid_override_name
         elseif (callerid_override_number:find('{ani}')) then
-            Logger.debug("[Functions][NORMALIZE_CALLERID_ANI] {ani} in callerid_number found")
+            Logger.debug("[NORMALIZE_CALLERID_ANI] {ani} in callerid_number found")
             callerid_number = params:getHeader('Caller-Caller-ID-Number') or ""
             callerid_number = callerid_number:match("%d+") or ""
             callerid_override_number = callerid_override_number:gsub("{ani}",callerid_number)
         end
         if (callerid_override_name:find('{number}')) then
-            Logger.debug("[Functions][NORMALIZE_CALLERID_ANI] {number} in callerid_name found")
+            Logger.debug("[NORMALIZE_CALLERID_ANI] {number} in callerid_name found")
             callerid_override_name = callerid_override_number
         end
-        Logger.debug("[Functions][NORMALIZE_CALLERID_ANI] CallerID name: "..callerid_override_name..", number: "..callerid_override_number)
+        Logger.debug("[NORMALIZE_CALLERID_ANI] CallerID name: "..callerid_override_name..", number: "..callerid_override_number)
         result = {}
         result['cid_name'] = callerid_override_name
         result['cid_number'] = callerid_override_number
@@ -67,14 +66,13 @@ end
 -- Check DID info OVERRIDE
 function check_did(destination_number,config)
 
-    Logger.notice("[CHECK_DID_OVERRIDE]: Start")
-
-    local did_localization = nil 
     local tmp_destination_number = destination_number
+
     if (config['did_global_translation'] ~= nil and config['did_global_translation'] ~= '' and tonumber(config['did_global_translation']) > 0) then
-        did_localization = get_localization(config['did_global_translation'],'O')
-        -- @TODO: Apply localization logic for DID global translation
-        if (did_localization ~= nil) then
+
+        local did_localization = get_localization(config['did_global_translation'],'O')
+
+        if (did_localization ~= nil and did_localization['number_originate'] ~= nil and did_localization['number_originate'] ~= '') then
             did_localization['number_originate'] = did_localization['number_originate']:gsub(" ", "")
             tmp_destination_number = do_number_translation(did_localization['number_originate'], destination_number)
         end
@@ -104,8 +102,6 @@ end
 -- check Reseller DID OVERRIDE
 function check_did_reseller(destination_number,userinfo,config)
 
-    Logger.notice("[CHECK_DID_RESELLER_OVERRIDE]: Start")
-
     local tmp_destination_number = do_number_translation(config['did_global_translation'], destination_number)   
     
     --	4.0.1 Original function
@@ -127,8 +123,6 @@ end
 -- Get localization override for more extensive logging
 
 function get_localization(id, type)
-
-    Logger.notice("[GET_LOCALIZATION_OVERRIDE]: Start " .. (id or "NONE") .. "/" .. (type or "NONE"))
 
 	local localization = nil
     local query
@@ -152,10 +146,8 @@ end
 
 -- Freeswitch XML Header OVERRIDE
 function freeswitch_xml_header(xml,destination_number,accountcode,maxlength,call_direction,accountname,xml_user_rates,customer_userinfo,config,xml_did_rates,reseller_cc_limit,callerid_array,original_destination_number)
-    local callstart = os.date("!%Y-%m-%d %H:%M:%S")
     
-    Logger.notice("[FREESWITCH_XML_HEADER_OVERRIDE]: Start")
-    Logger.info("[FREESWITCH_XML_HEADER_OVERRIDE] Call max lenght: " .. maxlength)
+    local callstart = os.date("!%Y-%m-%d %H:%M:%S")
 
     table.insert(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
     table.insert(xml, [[<document type="freeswitch/xml">]])
@@ -278,13 +270,10 @@ end
 -- Dialplan for outbound calls OVERRIDE
 function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_array,rate_group_id,old_trunk_id,force_outbound_routes,rategroup_type,livecall_data)
 
-    Logger.notice("[FREESWITCH_XML_OUTBOUND_OVERRIDE]: Start")
-
     local temp_destination_number = destination_number
     local tr_localization=nil
 
-    tr_localization = get_localization(outbound_info['provider_id'],'T')
-
+    tr_localization = get_localization(outbound_info['provider_id'], 'T')
     
     if (tr_localization ~= nil) then
         tr_localization['out_caller_id_terminate'] = tr_localization['out_caller_id_terminate']:gsub(" ", "")
@@ -545,12 +534,8 @@ function custom_inbound_5(xml, didinfo, userinfo, config, xml_did_rates, calleri
     local sip_did_backup_info
     local sip_did_backup_string
 
-    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Processing " .. didinfo['extensions'])
-
     local tmp_extensions_list = string.split(didinfo['extensions'], ";")
     local tmp_extensions = tmp_extensions_list[1]
-
-    Logger.notice("[CUSTOM_INBOUND_5_OVERRIDE] Forwarding to " .. tmp_extensions)
 
     string.gsub(tmp_extensions, "([^,|]+)", function(value) destination_str[#destination_str + 1] = value end) -- Other form of string:split
     string.gsub(tmp_extensions, "([,|]+)", function(value) deli_str[#deli_str + 1] = value end) -- Other form of string:split
@@ -619,9 +604,6 @@ end
 -- Dialplan for inbound calls
 function freeswitch_xml_inbound(xml, didinfo, userinfo, config, xml_did_rates, callerid_array, livecall_data)
 
-
-    Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Start")
-
     local is_local_extension = "0"
     
     callerid_array['cid_name'] = do_number_translation(didinfo['did_cid_translation'],callerid_array['cid_name'])
@@ -633,19 +615,9 @@ function freeswitch_xml_inbound(xml, didinfo, userinfo, config, xml_did_rates, c
     
     if (tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['in_caller_id_originate'] ~= nil) then
 
-        Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] Do CallerID localization " .. or_localization['in_caller_id_originate'])
-
         callerid_array['cid_name'] = do_number_translation(or_localization['in_caller_id_originate'], callerid_array['cid_name'])
         callerid_array['cid_number'] = do_number_translation(or_localization['in_caller_id_originate'], callerid_array['cid_number'])
-
-    elseif (tonumber(userinfo['localization_id']) > 0) then
-
-        Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] User localization is present " .. userinfo['localization_id'])
-        if or_localization then
-            Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] or_localization is present")
-        else
-            Logger.notice("[FREESWITCH_XML_INBOUND_OVERRIDE] or_localization is not present")
-        end
+        
     end
 
     xml = freeswitch_xml_callerid(xml, callerid_array)
@@ -677,14 +649,27 @@ function freeswitch_xml_inbound(xml, didinfo, userinfo, config, xml_did_rates, c
     return xml
 end
 
+
+function freeswitch_xml_callerid(xml, calleridinfo)
+
+    Logger.notice("[FREESWITCH_XML_CALLERID_OVERRIDE] Setting CallerID to <" .. (calleridinfo['cid_name'] or "NONE") .. "> " .. (calleridinfo['cid_number'] or "NONE"))
+
+    if (calleridinfo['cid_name'] ~= '' and calleridinfo['cid_name'] ~= '<null>')  then
+        table.insert(xml, [[<action application="set" data="effective_caller_id_name=]]..calleridinfo['cid_name']..[["/>]]);
+    end
+    if (calleridinfo['cid_number'] ~= '' and calleridinfo['cid_number'] ~= '<null>')  then
+        table.insert(xml, [[<action application="set" data="effective_caller_id_number=]]..calleridinfo['cid_number']..[["/>]]);
+    end
+
+    return xml
+end
+
 -- Get carrier rates OVERRIDE
 function get_carrier_rates(destination_number, number_loop_str, ratecard_id, rate_carrier_id, routing_type)
     
     local carrier_rates = {}     
     local trunk_id = 0     
     local query
-
-    Logger.notice("[GET_CARRIER_RATES_OVERRIDE] Start...")
     
     if routing_type == 1 then
         query = "SELECT TK.id as trunk_id,TK.name as trunk_name,TK.codec,GW.name as path,GW.dialplan_variable,TK.provider_id,TR.init_inc,TK.status,TK.maxchannels,TK.cps,TK.leg_timeout,TR.pattern,TR.id as outbound_route_id,TR.connectcost,TR.comment,TR.includedseconds,TR.cost,TR.inc,TR.prepend,TR.strip,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id) as path1,(select name from "..TBL_GATEWAYS.." where status=0 AND id = TK.failover_gateway_id1) as path2 FROM (select * from "..TBL_TERMINATION_RATES.." order by LENGTH (pattern) DESC) as TR "..TBL_TRUNKS.." as TK,"..TBL_GATEWAYS.." as GW WHERE GW.status=0 AND GW.id= TK.gateway_id AND TK.status=0 AND TK.id= TR.trunk_id AND "..number_loop_str.." AND TR.status = 0 "
@@ -763,8 +748,6 @@ end
 
 -- Check avilable DID info 
 function is_did_orphaned(destination_number, config)
-
-    Logger.notice("[IS_DID_ORPHANED_OVERRIDE] Start")
 
     local did_localization = nil 
     local check_did_info = ""
