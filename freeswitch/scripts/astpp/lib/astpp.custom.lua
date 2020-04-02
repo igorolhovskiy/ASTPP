@@ -412,9 +412,9 @@ end
 function neotel_number_normalization(xml, destination_number, calleridinfo)
 
     Logger.notice("[NEOTEL_NUMBER_NORMALIZATION]: Start")
-    tmp_xml = xml
+    local tmp_xml = xml
     -- Cleanup destination number
-    tmp_destination_number = "+" .. destination_number:gsub("%D", "")
+    local tmp_destination_number = "+" .. destination_number:gsub("%D", "")
 
     -- Process callerIDinfo first
     if (calleridinfo ~= nil) then
@@ -483,7 +483,7 @@ function do_number_translation(number_translation, destination_number)
 
     local tmp = number_translation:split(',')
 
-    for local tmp_key, tmp_value in pairs(tmp) do
+    for tmp_key, tmp_value in pairs(tmp) do
 
         tmp_value = tmp_value:gsub("\"", "")
 
@@ -774,9 +774,62 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
     Logger.notice("[SKYTEL_NUMBER_NORMALIZATION]: Start")
 
     local tmp_xml = xml
-    local tmp_destination_number = destination_number
+    local tmp_destination_number = destination_number:gsub("%D", "")
 
     Logger.notice("[SKYTEL_NUMBER_NORMALIZATION] D:" .. tmp_destination_number .. " C[name]: " .. calleridinfo['cid_name'] .. " C[number]:" .. calleridinfo['cid_number'])
+
+    if (calleridinfo ~= nil) then
+        local callerid_name = string.lower(calleridinfo['cid_name']) or ""
+        local callerid_number = calleridinfo['cid_number'] or ""
+
+        if (callerid_number ~= "" and callerid_number:find('anon') == nil) then
+            callerid_number = callerid_number:gsub("%D", "")
+        end
+
+        if (callerid_name == "") then
+            callerid_name = callerid_number
+        end
+
+        -- Normal call
+        if callerid_name == callerid_number then
+
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_number..[["/>]])
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+            table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
+            return tmp_xml, tmp_destination_number
+        end
+        
+        -- Check for Anon
+        if (callerid_name:find('anon') or callerid_name:find('restricted')) then
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=anonymous"/>]]);
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=anonymous"/>]]);
+            if (callerid_number ~= "") then
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+            end
+            table.insert(tmp_xml, [[<action application="set" data="sip_h_Privacy=id;"/>]])
+            table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
+            return tmp_xml, tmp_destination_number
+        end
+
+        -- Check for Forwarded. Name is holding real callee number, number is holding our number
+        if (callerid_name:sub(1, 1) == "F" or callerid_name:sub(1, 1) == "D") then
+            callerid_name = callerid_name:gsub("%D", "")
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
+            table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+            if (callerid_number ~= "") then
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_Diversion=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+            end
+            return tmp_xml, tmp_destination_number
+        end
+        
+        -- Faking callerID. Assuming real number is number, faking is name. Here we should use premium routes
+        callerid_name = callerid_name:gsub("%D", "")
+        tmp_destination_number = "3030#" .. tmp_destination_number
+        
+        table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
+        table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
+        table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
+    end
 
     return tmp_xml, tmp_destination_number
 end
