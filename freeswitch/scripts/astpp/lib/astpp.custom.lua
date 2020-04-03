@@ -425,6 +425,9 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
             callerid_number = "+" .. callerid_number:gsub("%D", "")
         end
 
+        -- Filter CallerID name
+        callerid_name = callerid_name:gsub("%D", "")
+
         if (callerid_name == "") then
             callerid_name = callerid_number
         end
@@ -461,7 +464,7 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
             return tmp_xml, tmp_destination_number
         end
 
-        callerid_name = "+" .. callerid_name:gsub("%D", "")
+        callerid_name = "+" .. callerid_name
         
         -- Faking callerID. Assuming real number is number, faking is name
         table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
@@ -776,7 +779,12 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
     local tmp_xml = xml
     local tmp_destination_number = destination_number:gsub("%D", "")
 
-    Logger.notice("[SKYTEL_NUMBER_NORMALIZATION] D:" .. tmp_destination_number .. " C[name]: " .. calleridinfo['cid_name'] .. " C[number]:" .. calleridinfo['cid_number'])
+    -- First - unset all custom vars
+    table.insert(tmp_xml, [[<action application="unset" data="sip_h_P-Asserted-Identity"/>]])
+    table.insert(tmp_xml, [[<action application="unset" data="sip_h_P-Preferred-Identity"/>]])
+    table.insert(tmp_xml, [[<action application="unset" data="sip_h_Privacy"/>]])
+    table.insert(tmp_xml, [[<action application="unset" data="sip_h_Diversion"/>]])
+
 
     if (calleridinfo ~= nil) then
         local callerid_name = string.lower(calleridinfo['cid_name']) or ""
@@ -785,6 +793,9 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
         if (callerid_number ~= "" and callerid_number:find('anon') == nil) then
             callerid_number = callerid_number:gsub("%D", "")
         end
+
+        -- Filter CallerID name
+        callerid_name = callerid_name:gsub("%D", "")
 
         if (callerid_name == "") then
             callerid_name = callerid_number
@@ -823,7 +834,6 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
         end
         
         -- Faking callerID. Assuming real number is number, faking is name. Here we should use premium routes
-        callerid_name = callerid_name:gsub("%D", "")
         tmp_destination_number = "3030#" .. tmp_destination_number
         
         table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
