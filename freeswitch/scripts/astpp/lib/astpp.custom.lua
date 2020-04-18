@@ -844,33 +844,3 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
 
     return tmp_xml, tmp_destination_number
 end
-
-
--- Get Balance OVERRIDE
-function get_balance(userinfo, rates, config)
-
-	-- If call found as international call then get balance from international balance and credit field
-    local tmp_prefix = ''
-    
-    if get_international_balance_prefix then 
-        tmp_prefix = get_international_balance_prefix(userinfo) 
-    end
-
-    local balance = tonumber(userinfo[tmp_prefix .. 'balance'])
-
-    -- Adjust Postpaid with credit limit
-    if tonumber(userinfo['posttoexternal']) == 1 then
-        balance = balance + tonumber(userinfo[tmp_prefix .. 'credit_limit'])
-    end
-
-    -- Override balance if call is DID / inbound and coming from provider to avoid provider balance checking upon DID call. 
-    if (userinfo['type'] == '3' and call_direction == 'inbound') then
-            balance = 10000
-    end
-
-    if fraud_check_balance_update then 
-        balance = fraud_check_balance_update(userinfo, balance, rates) 
-    end
-
-    return balance
-end
