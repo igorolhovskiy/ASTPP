@@ -844,3 +844,100 @@ function skytel_number_normalization(xml, destination_number, calleridinfo)
 
     return tmp_xml, tmp_destination_number
 end
+
+
+function get_user_daily_limit(userinfo)
+    if (userinfo['daily_limit']) then
+        return tonumber(userinfo['daily_limit'])
+    end
+
+    -- Additional processing for postpaid users
+    if (tonumber(userinfo['posttoexternal']) == 1) then
+        local credit_limit = tonumber(userinfo['credit_limit'])
+        if credit_limit then
+            return credit_limit / 10
+        end
+    end
+
+    -- User have no limits. Balance is our limit
+    Logger.warning("[GET_USER_DAILY_BALANCE] User " .. userinfo['id'] .. " have no daily limits!")
+    return 10000
+end
+
+function get_user_daily_balance(userinfo)
+
+    if ~(userinfo['id'] and tonumber(userinfo['id']) > 0) then
+        Logger.warning("[GET_USER_DAILY_BALANCE] Cannot get userinfo!")
+        return nil
+    end
+
+    local daily_balance
+    local daily_limit = get_user_daily_limit(userinfo)
+
+    local field_key = "daily_limit_" .. os.date("!%d_%m_%y")
+    local query = "SELECT limit_value FROM fraud_limits WHERE limit_key = '" .. field_key .. "' AND account_id = " .. userinfo['id'] .. " LIMIT 1"
+
+    Logger.debug("[GET_USER_DAILY_BALANCE] Query :" .. query)
+
+    assert (dbh:query(query, function(u)
+        if (u) then	
+            daily_balance = tonumber(u['limit_value'])
+        end
+    end))
+
+    if daily_balance == nil then
+        Logger.warning("[GET_USER_DAILY_BALANCE] No current daily balance for user " .. userinfo['id'] .. ", creating it...")
+
+        query = "INSERT INTO fraud_limits (account_id, limit_key, limit_value) VALUES (" .. userinfo['id'] .. ",'" .. field_key .. "','0')"
+        assert(dbh:query(query))
+
+        return daily_limit
+    end
+
+    if daily_balance >= daily_limit then
+        Logger.warning("[GET_USER_DAILY_BALANCE] Daily balance (" .. (daily_balance or "NONE") .. ") >=  daily limit(" .. (daily_limit or "NONE") .. ")!")
+        return 0
+    end
+
+    return daily_limit - daily_balance
+end
+
+ -- get_balance OVERRIDE
+function get_balance(userinfo, rates, config)
+
+	-- If call found as international call then get balance from international balance and credit field
+	local tmp_prefix = ''
+    
+    if get_international_balance_prefix then 
+        tmp_prefix = get_international_balance_prefix(userinfo) 
+    end
+
+    -- Get daily balance
+    local daily_balance = get_user_daily_balance(userinfo)
+
+    local balance = tonumber(userinfo[tmp_prefix .. 'balance'])
+
+    -- Postpaid clients are growing up in balance to credit limit
+    if (tonumber(userinfo['posttoexternal']) == 1) then
+        local credit_limit = tonumber(userinfo[tmp_prefix..'credit_limit'])
+
+        balance = credit_limit - balance
+    end
+
+    -- Override balance if call is DID / inbound and coming from provider to avoid provider balance checking upon DID call. 
+    if (userinfo['type'] == '3' and call_direction == 'inbound') then
+            balance = 10000
+            daily_balance = 10000
+    end
+
+    if fraud_check_balance_update then 
+        balance = fraud_check_balance_update(userinfo, balance, rates) 
+    end
+
+    if daily_balance and (daily_balance < balance) then
+        Logger.notice("[GET_BALANCE_OVEERIDE]: Returning daily balance: " .. daily_balance)
+        return daily_balance
+    end
+
+    return balance
+end

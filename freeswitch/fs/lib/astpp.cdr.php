@@ -188,6 +188,11 @@ $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariab
 	if ($debit > 0 && $dataVariable ['calltype'] != "FREE") {
 		update_balance ( $accountid, $debit, 0, $logger, $db, $config,$dataVariable );
 	}
+
+	// Update daily limits
+	if ($debit > 0) {
+		update_daily_limits($accountid, $debit, 0, $logger, $db, $config, $dataVariable);
+	}
 	
 	// Update parent or provider balance
 	if ($parent_cost > 0) {
