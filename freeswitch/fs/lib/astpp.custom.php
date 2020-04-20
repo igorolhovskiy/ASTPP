@@ -29,7 +29,7 @@
 function update_daily_limits($user_id, $amount, $entity_id, $logger, $db, $config, $dataVariable) {
 
     // Check if this daily limit is existing
-    $data_key = "daily_limit_" + gmdate("Y_m_d");
+    $data_key = "daily_limit_" . gmdate("Y_m_d");
     $query = "SELECT * FROM fraud_limits WHERE limit_key = '$data_key' AND account_id = $user_id LIMIT 1";
     $limit_set = $db->run ( $query );
 

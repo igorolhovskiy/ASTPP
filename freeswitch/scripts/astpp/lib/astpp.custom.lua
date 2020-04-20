@@ -847,7 +847,7 @@ end
 
 
 function get_user_daily_limit(userinfo)
-    if (userinfo['daily_limit']) then
+    if (userinfo['daily_limit'] and userinfo['daily_limit'] ~= '' and tonumber(userinfo['daily_limit']) > 0) then
         return tonumber(userinfo['daily_limit'])
     end
 
@@ -860,13 +860,31 @@ function get_user_daily_limit(userinfo)
     end
 
     -- User have no limits. Balance is our limit
-    Logger.warning("[GET_USER_DAILY_BALANCE] User " .. userinfo['id'] .. " have no daily limits!")
+    Logger.warning("[GET_USER_DAILY_LIMIT] User " .. userinfo['id'] .. " have no daily limits!")
+    return 10000
+end
+
+function get_user_single_call_limit(userinfo)
+
+    if (userinfo['single_call_limit'] and userinfo['single_call_limit'] ~= '' and tonumber(userinfo['single_call_limit']) > 0) then
+        return tonumber(userinfo['single_call_limit'])
+    end
+    
+    if (tonumber(userinfo['posttoexternal']) == 1) then
+        local credit_limit = tonumber(userinfo['credit_limit'])
+        if credit_limit then
+            return credit_limit / 20
+        end
+    end
+
+    Logger.warning("[GET_USER_SINGLE_CALL_LIMIT] User " .. userinfo['id'] .. " have no single call limits!")
+
     return 10000
 end
 
 function get_user_daily_balance(userinfo)
 
-    if ~(userinfo['id'] and tonumber(userinfo['id']) > 0) then
+    if not (userinfo['id'] and (userinfo['id']) ~= "" and tonumber(userinfo['id']) > 0) then
         Logger.warning("[GET_USER_DAILY_BALANCE] Cannot get userinfo!")
         return nil
     end
@@ -874,7 +892,7 @@ function get_user_daily_balance(userinfo)
     local daily_balance
     local daily_limit = get_user_daily_limit(userinfo)
 
-    local field_key = "daily_limit_" .. os.date("!%d_%m_%y")
+    local field_key = "daily_limit_" .. os.date("!%Y_%m_%d")
     local query = "SELECT limit_value FROM fraud_limits WHERE limit_key = '" .. field_key .. "' AND account_id = " .. userinfo['id'] .. " LIMIT 1"
 
     Logger.debug("[GET_USER_DAILY_BALANCE] Query :" .. query)
@@ -914,7 +932,7 @@ function get_balance(userinfo, rates, config)
 
     -- Get daily balance
     local daily_balance = get_user_daily_balance(userinfo)
-
+    local single_call_balance = get_user_single_call_limit(userinfo)
     local balance = tonumber(userinfo[tmp_prefix .. 'balance'])
 
     -- Postpaid clients are growing up in balance to credit limit
@@ -934,10 +952,7 @@ function get_balance(userinfo, rates, config)
         balance = fraud_check_balance_update(userinfo, balance, rates) 
     end
 
-    if daily_balance and (daily_balance < balance) then
-        Logger.notice("[GET_BALANCE_OVEERIDE]: Returning daily balance: " .. daily_balance)
-        return daily_balance
-    end
+    Logger.notice("[GET_BALANCE_OVEERIDE]: Got balances: Total:" .. balance .. " Daily: " .. daily_balance .. " Single call:" .. single_call_balance)
 
-    return balance
+    return math.min(balance, daily_balance, single_call_balance)
 end
