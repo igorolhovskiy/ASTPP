@@ -36,7 +36,7 @@ function update_daily_limits($user_id, $amount, $entity_id, $logger, $db, $confi
     // TOTALLY INCORRECT CASE!
     if (count($limit_set) == 0) {
         $query = "INSERT INTO fraud_limits (account_id, limit_key, limit_value)";
-        $query .= " VALUES(";
+        $query .= " VALUES (";
         $query .= " $user_id, '$data_key','$amount')";
         $logger->log ( "Daily limit create : " . $query );
         $db->run ( $query );
@@ -44,7 +44,7 @@ function update_daily_limits($user_id, $amount, $entity_id, $logger, $db, $confi
     }
 
 
-    $query = "UPDATE fraud_limits SET limit_value = CAST(CAST(limit_value AS SIGNED) + $amount AS VARCHAR)";
+    $query = "UPDATE fraud_limits SET limit_value = CAST(CAST(limit_value AS SIGNED) + $amount AS CHAR)";
     $query .= " WHERE account_id=" . $user_id . " AND limit_key = '$data_key'";
     $logger->log ( "Daily limit update : " . $query );
     $db->run ( $query );

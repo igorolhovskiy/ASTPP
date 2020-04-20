@@ -5,4 +5,5 @@ CREATE TABLE `fraud_limits` (
   `account_id` int(11) NOT NULL,
   `limit_key` varchar(32) NOT NULL,
   `limit_value` varchar(32) NULL DEFAULT NULL,
+  PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
