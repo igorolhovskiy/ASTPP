@@ -43,7 +43,6 @@ function update_daily_limits($user_id, $amount, $entity_id, $logger, $db, $confi
         return;
     }
 
-
     $query = "UPDATE fraud_limits SET limit_value = CAST(CAST(limit_value AS SIGNED) + $amount AS CHAR)";
     $query .= " WHERE account_id=" . $user_id . " AND limit_key = '$data_key'";
     $logger->log ( "Daily limit update : " . $query );
