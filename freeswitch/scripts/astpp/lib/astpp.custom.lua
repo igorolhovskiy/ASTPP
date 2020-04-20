@@ -913,7 +913,7 @@ function get_user_daily_balance(userinfo)
     end
 
     if daily_balance >= daily_limit then
-        Logger.warning("[GET_USER_DAILY_BALANCE] Daily balance (" .. (daily_balance or "NONE") .. ") >=  daily limit(" .. (daily_limit or "NONE") .. ")!")
+        Logger.warning("[GET_USER_DAILY_BALANCE] Daily balance (" .. (daily_balance or "NONE") .. ") >= Daily limit(" .. (daily_limit or "NONE") .. ")!")
         return 0
     end
 
