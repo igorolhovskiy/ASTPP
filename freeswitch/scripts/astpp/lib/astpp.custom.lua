@@ -946,6 +946,7 @@ function get_balance(userinfo, rates, config)
     if (userinfo['type'] == '3' and call_direction == 'inbound') then
         balance = 10000
         daily_balance = 10000
+        single_call_balance = 10000
     end
 
     if fraud_check_balance_update then 
