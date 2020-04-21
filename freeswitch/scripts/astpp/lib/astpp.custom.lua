@@ -944,9 +944,8 @@ function get_balance(userinfo, rates, config)
 
     -- Override balance if call is DID / inbound and coming from provider to avoid provider balance checking upon DID call. 
     if (userinfo['type'] == '3' and call_direction == 'inbound') then
-        balance = 10000
-        daily_balance = 10000
-        single_call_balance = 10000
+        Logger.notice("[GET_BALANCE_OVEERIDE]: Inbound DID. Returning 10000")
+        return 10000
     end
 
     if fraud_check_balance_update then 
