@@ -886,14 +886,14 @@ function get_user_daily_balance(userinfo)
 
     if not (userinfo['id'] and (userinfo['id']) ~= "" and tonumber(userinfo['id']) > 0) then
         Logger.warning("[GET_USER_DAILY_BALANCE] Cannot get userinfo!")
-        return nil
+        return 10000
     end
 
     local daily_balance
     local daily_limit = get_user_daily_limit(userinfo)
 
     local field_key = "daily_limit_" .. os.date("!%Y_%m_%d")
-    local query = "SELECT limit_value FROM fraud_limits WHERE limit_key = '" .. field_key .. "' AND account_id = " .. userinfo['id'] .. " LIMIT 1"
+    local query = "SELECT limit_value FROM " .. TBL_FRAUD_LIMITS .. " WHERE limit_key = '" .. field_key .. "' AND account_id = " .. userinfo['id'] .. " LIMIT 1"
 
     Logger.debug("[GET_USER_DAILY_BALANCE] Query :" .. query)
 
@@ -906,7 +906,7 @@ function get_user_daily_balance(userinfo)
     if daily_balance == nil then
         Logger.warning("[GET_USER_DAILY_BALANCE] No current daily balance for user " .. userinfo['id'] .. ", creating it...")
 
-        query = "INSERT INTO fraud_limits (account_id, limit_key, limit_value) VALUES (" .. userinfo['id'] .. ",'" .. field_key .. "','0')"
+        query = "INSERT INTO " .. TBL_FRAUD_LIMITS .. " (account_id, limit_key, limit_value) VALUES (" .. userinfo['id'] .. ",'" .. field_key .. "','0')"
         assert(dbh:query(query))
 
         return daily_limit
