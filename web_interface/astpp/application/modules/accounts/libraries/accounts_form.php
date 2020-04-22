@@ -972,6 +972,33 @@ class Accounts_form extends common
                 ''
             )
         );
+        $form[gettext('Fraud Protection')] = array(
+            array(
+                gettext('Daily limit'),
+                'INPUT',
+                array(
+                    'name' => 'daily_limit',
+                    'size' => '20',
+                    'class' => "text field medium",
+                ),
+                'numeric',
+                'tOOL TIP',
+                ''
+            ),
+            array(
+                gettext('Single call limit'),
+                'INPUT',
+                array(
+                    'name' => 'single_call_limit',
+                    'size' => '20',
+                    'class' => "text field medium",
+                ),
+                'numeric',
+                'tOOL TIP',
+                ''
+            ),            
+        );
+
         $form['button_save'] = array(
             'name' => 'action',
             'content' => gettext('Save'),
