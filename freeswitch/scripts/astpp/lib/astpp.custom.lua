@@ -312,6 +312,7 @@ function freeswitch_xml_outbound(xml,destination_number,outbound_info,callerid_a
     table.insert(xml, [[<action application="set" data="force_trunk_flag=]]..force_outbound_routes..[["/>]]);    
     table.insert(xml, [[<action application="export" data="presence_data=trunk_id=]]..outbound_info['trunk_id']..[["/>]])
     table.insert(xml, [[<action application="set" data="intcall=]]..(outbound_info['intcall'] and 1 or 0)..[["/>]])
+    table.insert(xml, [[<action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,NO_ROUTE_DESTINATION,USER_NOT_REGISTERED"/>]])
 
     -- Check if is there any gateway configuration params available for it.
     if (outbound_info['dialplan_variable'] ~= '') then 

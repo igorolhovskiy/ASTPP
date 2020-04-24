@@ -1,6 +1,6 @@
 ALTER TABLE `dids` ADD `localization_id` int(3) NULL;
 
-CREATE TABLE `fraud_limits` (
+CREATE TABLE `fraud_limits_counters` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `account_id` int(11) NOT NULL,
   `limit_key` varchar(32) NOT NULL,
