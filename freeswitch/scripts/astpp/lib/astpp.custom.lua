@@ -419,17 +419,18 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
 
     -- Process callerIDinfo first
     if (calleridinfo ~= nil) then
-        local callerid_name = string.lower(calleridinfo['cid_name']) or ""
+        local callerid_name = calleridinfo['cid_name'] or ""
         local callerid_number = calleridinfo['cid_number'] or ""
 
+        callerid_name = callerid_name:lower()
+        callerid_number = callerid_number:lower()
+
+        -- Filter CallerID number
         if (callerid_number ~= "" and callerid_number:find('anon') == nil) then
             callerid_number = "+" .. callerid_number:gsub("%D", "")
         end
 
-        -- Filter CallerID name
-        callerid_name = callerid_name:gsub("%D", "")
-
-        if (callerid_name == "") then
+        if (callerid_name == "" or callerid_name == "+") then
             callerid_name = callerid_number
         end
 
@@ -443,7 +444,7 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         end
         
         -- Check for Anon
-        if (callerid_name:find('anon') or callerid_name:find('restricted')) then
+        if callerid_name:find('anon') then
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=anonymous"/>]]);
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=anonymous"/>]]);
             if (callerid_number ~= "") then
@@ -465,7 +466,7 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
             return tmp_xml, tmp_destination_number
         end
 
-        callerid_name = "+" .. callerid_name
+        callerid_name = "+" .. callerid_name:gsub("%D", "")
         
         -- Faking callerID. Assuming real number is number, faking is name
         table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
