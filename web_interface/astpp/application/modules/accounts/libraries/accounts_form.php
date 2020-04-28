@@ -4730,15 +4730,15 @@ class Accounts_form extends common
                     "right"
                 ),
                 array(
-                    gettext("Dayly Balance"),
-                    "90",
+                    gettext("Daily Balance"),
+                    "70",
                     "limit_value",
                     "",
                     "",
                     "",
                     "",
                     "true",
-                    "right"
+                    "center"
                 ),                
                 array(
                     gettext("Credit Limit") . " <br/>($currency)",
