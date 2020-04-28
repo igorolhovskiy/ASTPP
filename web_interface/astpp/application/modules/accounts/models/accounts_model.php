@@ -353,7 +353,11 @@ class Accounts_model extends CI_Model
             $where['reseller_id'] = $this->session->userdata["accountinfo"]['id'];
         }
         if ($flag) {
+            $this->db->join("(select account_id, round(limit_value,2) as limit_value FROM fraud_limits "
+                . "where limit_key = '" . 'daily_limit_' . gmdate("Y_m_d") ."' "
+                . " ) fraud_limits ", 'accounts.id = fraud_limits.account_id', 'left');            
             $query = $this->db_model->select("*", "accounts", $where, "number", "desc", $limit, $start);
+            
         } else {
             $query = $this->db_model->countQuery("*", "accounts", $where);
         }
