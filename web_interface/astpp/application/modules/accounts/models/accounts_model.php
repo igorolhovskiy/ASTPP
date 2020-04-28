@@ -300,6 +300,10 @@ class Accounts_model extends CI_Model
         }
         $this->db->select('*');
         $this->db->select('reseller_id as rid');
+        $this->db->select('round(fraud_limits.limit_value,2) as limit_value', false);
+        $this->db->join("(select account_id, limit_value FROM fraud_limits "
+            . "where limit_key = '" . 'daily_limit_' . gmdate("Y_m_d") ."' "
+            . " ) fraud_limits ", 'accounts.id = fraud_limits.account_id', 'left');
         $this->db->where_in('type', array(
             '0',
             '3'
