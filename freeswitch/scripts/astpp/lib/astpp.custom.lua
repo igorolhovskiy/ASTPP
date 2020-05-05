@@ -456,12 +456,13 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         end
 
         -- Check for Forwarded. Name is holding real callee number, number is holding our number
-        if (callerid_name:sub(1, 1) == "F" or callerid_name:sub(1, 1) == "D") then
+        if (callerid_name:sub(1, 1) == "f" or callerid_name:sub(1, 1) == "d") then
             callerid_name = "+" .. callerid_name:gsub("%D", "")
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
             if (callerid_number ~= "") then
                 table.insert(tmp_xml, [[<action application="set" data="sip_h_Diversion=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
             end
             return tmp_xml, tmp_destination_number
         end
