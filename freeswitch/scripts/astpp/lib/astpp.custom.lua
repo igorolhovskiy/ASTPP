@@ -462,6 +462,8 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
             if (callerid_number ~= "") then
                 table.insert(tmp_xml, [[<action application="set" data="sip_h_Diversion=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Preferred-Identity=<sip:]]..callerid_name..[[@$${domain}>"/>]])
                 table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
             end
             return tmp_xml, tmp_destination_number
