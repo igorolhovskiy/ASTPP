@@ -961,3 +961,22 @@ function get_balance(userinfo, rates, config)
 
     return math.min(balance, daily_balance, single_call_balance)
 end
+
+
+-- Get outbound callerid to override in calls OVERRIDE
+-- If CallerID Name in database == "*", than preserve original callerIDname
+function get_override_callerid(userinfo, callerid_name, callerid_number)
+    
+    local callerid = {}
+    local query  = "SELECT callerid_name as cid_name, callerid_number as cid_number, accountid FROM "..TBL_ACCOUNTS_CALLERID.." WHERE accountid = "..userinfo['id'].." AND status=0 LIMIT 1";    
+    Logger.debug("[GET_OVERRIDE_CALLERID_OVERRIDE] Query :" .. query)
+    assert (dbh:query(query, function(u)
+	    callerid = u
+    end))
+
+    if (callerid['cid_number'] ~= nil and callerid['cid_number'] ~= '' and callerid['cid_name'] == "*") then
+        callerid['cid_name'] = (callerid_name == '') and callerid_number or callerid_name
+    end
+    
+    return callerid
+end
