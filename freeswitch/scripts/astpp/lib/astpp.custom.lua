@@ -456,12 +456,15 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         end
 
         -- Check for Forwarded. Name is holding real callee number, number is holding our number
-        if (callerid_name:sub(1, 1) == "F" or callerid_name:sub(1, 1) == "D") then
+        if (callerid_name:sub(1, 1) == "f" or callerid_name:sub(1, 1) == "d") then
             callerid_name = "+" .. callerid_name:gsub("%D", "")
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
             if (callerid_number ~= "") then
                 table.insert(tmp_xml, [[<action application="set" data="sip_h_Diversion=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Asserted-Identity=<sip:]]..callerid_number..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="set" data="sip_h_P-Preferred-Identity=<sip:]]..callerid_name..[[@$${domain}>"/>]])
+                table.insert(tmp_xml, [[<action application="export" data="nolocal:sip_cid_type=none"/>]])
             end
             return tmp_xml, tmp_destination_number
         end
@@ -957,4 +960,23 @@ function get_balance(userinfo, rates, config)
     Logger.notice("[GET_BALANCE_OVEERIDE]: Got balances: Total:" .. balance .. " Daily: " .. daily_balance .. " Single call:" .. single_call_balance)
 
     return math.min(balance, daily_balance, single_call_balance)
+end
+
+
+-- Get outbound callerid to override in calls OVERRIDE
+-- If CallerID Name in database == "*", than preserve original callerIDname
+function get_override_callerid(userinfo, callerid_name, callerid_number)
+    
+    local callerid = {}
+    local query  = "SELECT callerid_name as cid_name, callerid_number as cid_number, accountid FROM "..TBL_ACCOUNTS_CALLERID.." WHERE accountid = "..userinfo['id'].." AND status=0 LIMIT 1";    
+    Logger.debug("[GET_OVERRIDE_CALLERID_OVERRIDE] Query :" .. query)
+    assert (dbh:query(query, function(u)
+	    callerid = u
+    end))
+
+    if (callerid['cid_number'] ~= nil and callerid['cid_number'] ~= '' and callerid['cid_name'] == "*") then
+        callerid['cid_name'] = (callerid_name == '') and callerid_number or callerid_name
+    end
+    
+    return callerid
 end
