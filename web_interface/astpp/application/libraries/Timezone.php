@@ -37,13 +37,25 @@ class Timezone {
 		$number = ($timezone_id == "") ? $this->uset_timezone () : $timezone_id;
 		$SERVER_GMT = '0';
 		
-		$result = $this->CI->db->query ( "select gmtoffset from timezone where id =" . $number );
+		$result = $this->CI->db->query ( "select gmtoffset, php_timezone_string from timezone where id =" . $number );
 		$timezone_offset = $result->result ();
-		
+	
 		$USER_GMT = $timezone_offset ['0']->gmtoffset;
-		
+
+		// Try to get datetime from php timezone
+		$userTimezoneString = $timezone_offset ['0']->php_timezone_string;
+		if (!empty($userTimezoneString)) {
+			$userTimeZone = new DateTimeZone($userTimezoneString);
+			$serverTimeZone = new DateTimeZone('GMT');
+			$dateTime = new DateTime($currDate, $serverTimeZone);
+			$offset = $userTimeZone->getOffset($dateTime);
+			$addInterval = DateInterval::createFromDateString((string)$offset . 'seconds');
+			$dateTime->add($addInterval);
+			return $fulldate == 1 ? $dateTime->format('Y-m-d H:i:s') : $dateTime->format('Y-m-d');
+		}
+
 		$date_time_array = getdate ( strtotime ( $currDate ) );
-		
+
 		$hours = $date_time_array ['hours'];
 		$minutes = $date_time_array ['minutes'];
 		$seconds = $date_time_array ['seconds'];
