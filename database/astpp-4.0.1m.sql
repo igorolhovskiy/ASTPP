@@ -10,3 +10,6 @@ CREATE TABLE `fraud_limits_counters` (
 
 ALTER TABLE `accounts` ADD `daily_limit` DECIMAL(20,5);
 ALTER TABLE `accounts` ADD `single_call_limit` DECIMAL(20,5);
+
+ALTER TABLE timezone ADD COLUMN php_timezone_string varchar(255) DEFAULT NULL;
+UPDATE timezone SET php_timezone_string = 'Europe/Berlin' WHERE id = 28;
