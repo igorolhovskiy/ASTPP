@@ -49,6 +49,38 @@ function update_daily_limits($user_id, $amount, $entity_id, $logger, $db, $confi
     $db->run ( $query );
 }
 
+function get_translated_dst($dataVariable) {
+    if (strlen($dataVariable['last_sent_callee_id_number']) > 0) {
+        return preg_replace("/[^0-9]/", "", $dataVariable['last_sent_callee_id_number']);
+    }
+
+    if ($dataVariable['last_app'] == 'bridge') {
+        $last_arg = $dataVariable['last_arg'];
+        $last_arg = end(explode('/', $last_arg));
+        return preg_replace("/[^0-9]/", "", $last_arg);
+    }
+
+    if (strlen($dataVariable['bridge_channel']) > 0) {
+        $last_arg = $dataVariable['bridge_channel'];
+        $last_arg = end(explode('/', $last_arg));
+        return preg_replace("/[^0-9]/", "", $last_arg);
+    }
+
+    if (strlen($dataVariable['originated_legs']) > 0) {
+        $last_arg = $dataVariable['originated_legs'];
+        $last_arg = end(explode(';', $last_arg));
+        return preg_replace("/[^0-9]/", "", $last_arg);
+    }
+
+    if (strlen($dataVariable['current_application_data']) > 0) {
+        $last_arg = $dataVariable['current_application_data'];
+        $last_arg = end(explode('/', $last_arg));
+        return preg_replace("/[^0-9]/", "", $last_arg);
+    }
+
+    return "";
+}
+
 // Generate CDR string for insert query for customer.
 function get_cdr_string($dataVariable, $accountid, $account_type, $actual_duration, $termination_rate, $origination_rate, $provider_cost, $parentid, $debit, $cost, $logger, $db) {
 	
@@ -97,6 +129,7 @@ function get_cdr_string($dataVariable, $accountid, $account_type, $actual_durati
     $cdr_string .= "'" . $dataVariable['sip_user'] . "',"; // sip_user
     $cdr_string .= "'" . $dataVariable['origination_call_type'] . "',"; // ct
     $cdr_string .= "'" . date("Y-m-d H:i:s", (strtotime(date(urldecode($dataVariable['callstart']))) + $actual_duration)) . "'"; // end_stamp
+    $cdr_string .= "'" . get_translated_dst($dataVariable) . "'"; // translated_dst
 
 	return $cdr_string;
 }
