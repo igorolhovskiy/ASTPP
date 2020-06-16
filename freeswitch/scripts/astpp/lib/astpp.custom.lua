@@ -33,31 +33,31 @@ end
 function normalize_callerid_ani(callerid)
 
     if (callerid ~= nil) then
-        callerid_override_name = callerid['cid_name']
-        callerid_override_number = callerid['cid_number']
-        if (callerid_override_name:find('{ani}')) then
+        local callerid_override_name = callerid['cid_name']
+        local callerid_override_number = callerid['cid_number']
+        if (callerid_override_name and callerid_override_name:find('{ani}')) then
             Logger.debug("[NORMALIZE_CALLERID_ANI] {ani} in callerid_name found")
             callerid_name = params:getHeader('Caller-Caller-ID-Name') or ""
             callerid_name = callerid_name:match("%d+") or ""
-            callerid_override_name = callerid_override_name:gsub("{ani}",callerid_name)
+            callerid_override_name = callerid_override_name:gsub("{ani}", callerid_name)
         end
-        if (callerid_override_number:find('{name}')) then
+        if (callerid_override_number and callerid_override_number:find('{name}')) then
             Logger.debug("[NORMALIZE_CALLERID_ANI] {name} in callerid_number found")
             callerid_override_number = callerid_override_name
-        elseif (callerid_override_number:find('{ani}')) then
+        elseif (callerid_override_number and callerid_override_number:find('{ani}')) then
             Logger.debug("[NORMALIZE_CALLERID_ANI] {ani} in callerid_number found")
             callerid_number = params:getHeader('Caller-Caller-ID-Number') or ""
             callerid_number = callerid_number:match("%d+") or ""
-            callerid_override_number = callerid_override_number:gsub("{ani}",callerid_number)
+            callerid_override_number = callerid_override_number:gsub("{ani}", callerid_number)
         end
-        if (callerid_override_name:find('{number}')) then
+        if (callerid_override_name and callerid_override_name:find('{number}')) then
             Logger.debug("[NORMALIZE_CALLERID_ANI] {number} in callerid_name found")
             callerid_override_name = callerid_override_number
         end
         Logger.debug("[NORMALIZE_CALLERID_ANI] CallerID name: "..callerid_override_name..", number: "..callerid_override_number)
         result = {}
-        result['cid_name'] = callerid_override_name
-        result['cid_number'] = callerid_override_number
+        result['cid_name'] = callerid_override_name or callerid['cid_name']
+        result['cid_number'] = callerid_override_number or callerid['cid_number']
         return result
     end
     return nil
