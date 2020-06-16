@@ -54,10 +54,16 @@ function normalize_callerid_ani(callerid)
             Logger.debug("[NORMALIZE_CALLERID_ANI] {number} in callerid_name found")
             callerid_override_name = callerid_override_number
         end
+
         result = {}
         result['cid_name'] = callerid_override_name or callerid['cid_name']
         result['cid_number'] = callerid_override_number or callerid['cid_number']
-        Logger.debug("[NORMALIZE_CALLERID_ANI] CallerID name: "..(result['cid_name'] or "<empty>")..", number: "..(result['cid_number'] or "<empty>"))
+
+        local return_cid_name = result['cid_name'] or "<empty>"
+        local return_cid_number = result['cid_number'] or "<empty>"
+
+        Logger.debug("[NORMALIZE_CALLERID_ANI] CallerID name: ".. return_cid_name .. ", number: " .. return_cid_number)
+        
         return result
     end
     return nil
