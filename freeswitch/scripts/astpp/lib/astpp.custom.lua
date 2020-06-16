@@ -977,6 +977,8 @@ function get_override_callerid(userinfo, callerid_name, callerid_number)
     if (callerid['cid_number'] ~= nil and callerid['cid_number'] ~= '' and callerid['cid_name'] == "*") then
         callerid['cid_name'] = (callerid_name == '') and callerid_number or callerid_name
     end
+
+    callerid = normalize_callerid_ani(callerid)
     
     return callerid
 end
