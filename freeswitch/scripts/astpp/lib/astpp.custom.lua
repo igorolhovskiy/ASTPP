@@ -464,6 +464,9 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         -- Check for Forwarded. Name is holding real callee number, number is holding our number
         if (callerid_name:sub(1, 1) == "f" or callerid_name:sub(1, 1) == "d") then
             callerid_name = "+" .. callerid_name:gsub("%D", "")
+            if callerid_name == "+" then
+                callerid_name = callerid_number
+            end
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
             table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_name=]]..callerid_name..[["/>]])
             if (callerid_number ~= "") then
@@ -476,6 +479,10 @@ function neotel_number_normalization(xml, destination_number, calleridinfo)
         end
 
         callerid_name = "+" .. callerid_name:gsub("%D", "")
+
+        if callerid_name == "+" then
+            callerid_name = callerid_number
+        end
         
         -- Faking callerID. Assuming real number is number, faking is name
         table.insert(tmp_xml, [[<action application="set" data="effective_caller_id_number=]]..callerid_name..[["/>]])
