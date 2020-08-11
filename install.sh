@@ -108,7 +108,7 @@ install_prerequisties ()
 get_astpp_source ()
 {
         cd /opt
-        git clone -b v4.0.1 https://github.com/iNextrix/ASTPP.git
+        git clone -b v4.0.1m https://github.com/igorolhovskiy/ASTPP.git
 }
 
 #License Acceptence
@@ -126,7 +126,7 @@ license_accept ()
                 if [ -f LICENSE ]; then
                         more LICENSE
                 else
-                        wget --no-check-certificate -q -O GNU-AGPLv4.0.1.txt https://raw.githubusercontent.com/iNextrix/ASTPP/master/LICENSE
+                        wget --no-check-certificate -q -O GNU-AGPLv4.0.1.txt https://raw.githubusercontent.com/igorolhovskiy/ASTPP/master/LICENSE
                         more GNU-AGPLv4.0.1.txt
                 fi
                 echo "***"
