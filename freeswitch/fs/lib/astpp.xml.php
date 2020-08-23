@@ -177,6 +177,9 @@ function load_sofia($logger, $db, $config) {
 				if ($sp_gw_settings_value != "")
 					$xml .= "           <param name=\"" . $sp_gw_settings_key . "\" value=\"" . $sp_gw_settings_value . "\"/>\n";
 			}
+			//$xml .= "<variables>";
+			//$xml .= "<variable direction=\"both\" name=\"dtmf_type\" value=\"info\"> ";
+			//$xml .= "</variables>";
 			$xml .= "       </gateway>\n";
 		}
 		$xml .= "   </gateways>\n";
